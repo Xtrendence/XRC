@@ -17,22 +17,34 @@ export function Page({
   return (
     <>
       <Sheet
-        sx={(theme) => ({
-          background: 'url(/background.jpg)',
-          backgroundColor: theme.palette.background.surface,
-          backgroundSize: 'cover',
-          backgroundAttachment: 'fixed',
-          backgroundPosition: 'center',
-          filter: 'blur(12px)',
+        sx={{
           position: 'absolute',
           top: 0,
           left: 0,
           width: '100%',
           height: '100%',
           zIndex: 1,
-          transform: 'scale(1.1)',
-        })}
-      />
+          overflow: 'hidden',
+        }}
+      >
+        <Sheet
+          sx={(theme) => ({
+            background: 'url(/background.jpg)',
+            backgroundColor: theme.palette.background.surface,
+            backgroundSize: 'cover',
+            backgroundAttachment: 'fixed',
+            backgroundPosition: 'center',
+            filter: 'blur(12px)',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 1,
+            transform: 'scale(1.1)',
+          })}
+        />
+      </Sheet>
       <Sheet
         sx={{
           background: 'rgba(0, 0, 0, 0.5)',
