@@ -1,7 +1,7 @@
 import { ListItemDecorator, Stack, Tab, TabList, Tabs } from '@mui/joy';
 import { FaCog, FaMicrochip, FaRedo, FaToggleOn } from 'react-icons/fa';
 import { navigationHeight } from '../../globalVariables';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export const tabs = [
   '/processes',
@@ -12,6 +12,9 @@ export const tabs = [
 
 export default function Navigation() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const currentTab = tabs.findIndex((tab) => tab === location.pathname);
 
   return (
     <>
@@ -20,18 +23,21 @@ export default function Navigation() {
         maxHeight={navigationHeight}
         minHeight={navigationHeight}
         height={navigationHeight}
-        sx={(theme) => ({
-          backgroundColor: theme.palette.background.surface,
+        sx={{
+          background: 'transparent',
           display: 'flex',
           width: '100%',
           position: 'fixed',
-          zIndex: 1,
+          zIndex: 4,
           top: 0,
           left: 0,
-        })}
+        }}
       >
         <Tabs
-          defaultValue={0}
+          value={currentTab || 0}
+          sx={{
+            background: 'transparent',
+          }}
           onChange={(_, tab) => {
             const route = tabs[Number(tab)];
             navigate(route);

@@ -1,19 +1,73 @@
-import { Sheet } from '@mui/joy';
+import { Sheet, Stack } from '@mui/joy';
 import { ReactNode } from 'react';
-import { navigationHeight, pageHeight } from '../../globalVariables';
+import {
+  contentHeight,
+  navigationHeight,
+  pageHeight,
+  pageMargin,
+} from '../../globalVariables';
 
-export function Page({ children }: { children: ReactNode }) {
+export function Page({
+  overflowX = 'hidden',
+  children,
+}: {
+  overflowX?: string;
+  children: ReactNode;
+}) {
   return (
-    <Sheet
-      sx={{
-        top: navigationHeight,
-        height: pageHeight,
-        minHeight: pageHeight,
-        maxHeight: pageHeight,
-        overflow: 'hidden',
-      }}
-    >
-      {children}
-    </Sheet>
+    <>
+      <Sheet
+        sx={(theme) => ({
+          background: 'url(/background.jpg)',
+          backgroundColor: theme.palette.background.surface,
+          backgroundSize: 'cover',
+          backgroundAttachment: 'fixed',
+          backgroundPosition: 'center',
+          filter: 'blur(12px)',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 1,
+          transform: 'scale(1.1)',
+        })}
+      />
+      <Sheet
+        sx={{
+          background: 'rgba(0, 0, 0, 0.5)',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 2,
+        }}
+      />
+      <Sheet
+        sx={{
+          height: pageHeight,
+          minHeight: pageHeight,
+          maxHeight: pageHeight,
+          overflow: 'hidden',
+          overflowX,
+          position: 'absolute',
+          top: navigationHeight,
+          left: 0,
+          width: '100%',
+          zIndex: 3,
+          background: 'transparent',
+        }}
+      >
+        <Stack
+          margin={pageMargin}
+          overflow={`${overflowX} auto`}
+          maxHeight={contentHeight}
+          boxSizing={'border-box'}
+        >
+          {children}
+        </Stack>
+      </Sheet>
+    </>
   );
 }

@@ -7,16 +7,19 @@ import {
 } from 'react-router-dom';
 import { CssVarsProvider } from '@mui/joy/styles';
 
-import Settings from './components/settings/Settings';
-import Processes from './components/processes/Processes';
 import Navigation from './components/navigation/Navigation';
+
+import Processes from './components/processes/Processes';
 import ControlCenter from './components/control-center/ControlCenter';
 import BackupUtility from './components/backup-utility/BackupUtility';
+import Settings from './components/settings/Settings';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (
     <CssVarsProvider defaultMode="dark">
       <Router>
+        <Toaster />
         <Navigation />
         <Routes>
           <Route path="/" element={<Processes />} />
