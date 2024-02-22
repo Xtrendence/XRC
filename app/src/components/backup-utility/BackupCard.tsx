@@ -24,6 +24,8 @@ export function BackupCard({
   onUpdate: (changes: TNewBackupSetting) => void;
   setSettingToDelete: Dispatch<SetStateAction<TNewBackupSetting | undefined>>;
 }) {
+  const originalSetting = setting;
+
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [changes, setChanges] = useState<TNewBackupSetting>(setting);
 
@@ -35,6 +37,7 @@ export function BackupCard({
             type="update"
             newSetting={changes}
             setNewSetting={setChanges}
+            originalSetting={originalSetting}
             onConfirm={() => onUpdate(changes)}
             setMode={setMode}
           />
@@ -276,36 +279,51 @@ export function BackupCard({
               </Stack>
             </Stack>
             <Stack gap={2}>
-              <Sheet
+              <Tooltip
+                arrow
+                placement="left"
                 variant="soft"
                 sx={{
-                  minWidth: 185,
-                  maxWidth: 185,
-                  borderRadius: 'md',
-                  padding: 1,
-                  maxHeight: '36px',
-                  boxSizing: 'border-box',
-                  display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
+                  maxWidth: 300,
                 }}
+                title={`Click on the "Edit" button to enable or disable this backup routine.`}
               >
-                <Typography fontWeight={'bold'} variant="plain">
-                  {changes?.enabled ? 'Enabled' : 'Disabled'}
-                </Typography>
-                <Switch
-                  size="lg"
-                  color={changes?.enabled ? 'success' : 'danger'}
-                  checked={changes?.enabled}
-                  onChange={(e) => {
-                    setChanges((prev) => ({
-                      ...prev,
-                      enabled: e.target.checked,
-                    }));
+                <Sheet
+                  variant="soft"
+                  sx={{
+                    minWidth: 185,
+                    maxWidth: 185,
+                    borderRadius: 'md',
+                    padding: 1,
+                    maxHeight: '36px',
+                    boxSizing: 'border-box',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    opacity: 0.75,
+                    cursor: 'not-allowed',
                   }}
-                />
-              </Sheet>
+                >
+                  <Typography
+                    fontWeight={'bold'}
+                    variant="plain"
+                    sx={{
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    {changes?.enabled ? 'Enabled' : 'Disabled'}
+                  </Typography>
+                  <Switch
+                    size="lg"
+                    color={changes?.enabled ? 'success' : 'danger'}
+                    checked={changes?.enabled}
+                    sx={{
+                      pointerEvents: 'none',
+                    }}
+                  />
+                </Sheet>
+              </Tooltip>
               <Stack flexDirection={'row'} gap={2}>
                 <Button
                   variant="solid"

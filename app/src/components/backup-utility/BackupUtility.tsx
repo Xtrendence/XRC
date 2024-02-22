@@ -11,18 +11,21 @@ import { Stack } from '@mui/joy';
 import ConfirmationModal from '../common/ConfirmationModal';
 import { useTitle } from '../../hooks/useTitle';
 
+const initialNewSetting: TNewBackupSetting = {
+  enabled: false,
+  name: '',
+  path: '',
+  frequency: undefined,
+  limit: undefined,
+};
+
 export default function BackupUtility() {
   useTitle('Backup Utility');
 
   const [settings, setSettings] = useState<TBackupSettings>([]);
 
-  const [newSetting, setNewSetting] = useState<TNewBackupSetting>({
-    enabled: false,
-    name: '',
-    path: '',
-    frequency: undefined,
-    limit: undefined,
-  });
+  const [newSetting, setNewSetting] =
+    useState<TNewBackupSetting>(initialNewSetting);
 
   const [settingToDelete, setSettingToDelete] = useState<TNewBackupSetting>();
 
@@ -30,7 +33,8 @@ export default function BackupUtility() {
     axios
       .get(`${apiUrl}/backup`)
       .then((res) => {
-        setSettings(res.data.settings);
+        const data: TBackupSettings = res.data.settings;
+        setSettings(data.sort((a, b) => a.name.localeCompare(b.name)));
       })
       .catch((error) => {
         console.log(error);
@@ -44,23 +48,56 @@ export default function BackupUtility() {
       return;
     }
 
-    // axios
-    //   .post(`${apiUrl}/backup`, newSetting)
-    //   .then((res) => {
-    //     setSettings(res.data.settings);
-    //     toast.success('Backup setting created successfully.', toastOptions);
-    //   })
-    //   .catch((error) => {
-    //     console.log(error);
-    //     toast.error(
-    //       'Could not create backup setting. Please try again and make sure all fields are filled out and the correct type.',
-    //       toastOptions
-    //     );
-    //   });
+    axios
+      .post(`${apiUrl}/backup`, newSetting)
+      .then((res) => {
+        const data: TBackupSettings = res.data.settings;
+        setNewSetting(initialNewSetting);
+        setSettings(data.sort((a, b) => a.name.localeCompare(b.name)));
+        toast.success('Backup setting created successfully.', toastOptions);
+      })
+      .catch((error) => {
+        console.log(error);
+
+        if (error?.response?.data?.message) {
+          toast.error(error.response.data.message, toastOptions);
+          return;
+        }
+
+        toast.error(
+          'Could not create backup setting. Please try again and make sure all fields are filled out and the correct type.',
+          toastOptions
+        );
+      });
   };
 
   const handleUpdate = (changes: TNewBackupSetting) => {
-    console.log(changes);
+    const valid = validateNewBackupSetting(changes, toast);
+
+    if (!valid) {
+      return;
+    }
+
+    axios
+      .put(`${apiUrl}/backup/${changes.id}`, changes)
+      .then((res) => {
+        const data: TBackupSettings = res.data.settings;
+        setSettings(data.sort((a, b) => a.name.localeCompare(b.name)));
+        toast.success('Backup setting updated successfully.', toastOptions);
+      })
+      .catch((error) => {
+        console.log(error);
+
+        if (error?.response?.data?.message) {
+          toast.error(error.response.data.message, toastOptions);
+          return;
+        }
+
+        toast.error(
+          'Could not update backup setting. Please try again and make sure all fields are filled out and the correct type.',
+          toastOptions
+        );
+      });
   };
 
   useEffect(() => {

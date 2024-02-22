@@ -1,6 +1,6 @@
 import type { Express } from 'express';
 import { getFiles } from '../utils/getFiles';
-import { readFileSync, statSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, statSync, writeFileSync } from 'fs';
 import { validJSON } from '../utils/validJSON';
 import gradient from 'gradient-string';
 import { v4 } from 'uuid';
@@ -48,6 +48,18 @@ export function addBackupRoutes(app: Express) {
 
     const formattedPath = formatPath(path);
 
+    const exists = existsSync(formattedPath);
+
+    if (!exists) {
+      res
+        .status(400)
+        .send({
+          message:
+            'Path does not exist. Make sure that file or directory exists before creating a backup routine for it.',
+        });
+      return;
+    }
+
     const isFile = !statSync(formattedPath).isDirectory();
 
     settings.push({
@@ -93,6 +105,13 @@ export function addBackupRoutes(app: Express) {
     const index = settings.findIndex((s) => s.id === id);
 
     const formattedPath = formatPath(path);
+
+    const exists = existsSync(formattedPath);
+
+    if (!exists) {
+      res.status(400).send({ message: 'Path does not exist.' });
+      return;
+    }
 
     const isFile = !statSync(formattedPath).isDirectory();
 
