@@ -69,6 +69,10 @@ export function Page({
           width: '100%',
           zIndex: 3,
           background: 'transparent',
+          '@media (min-width: 1400px)': {
+            justifyContent: 'center',
+            display: 'flex',
+          },
         }}
       >
         <Stack
@@ -76,6 +80,12 @@ export function Page({
           overflow={`${overflowX} auto`}
           maxHeight={contentHeight}
           boxSizing={'border-box'}
+          sx={{
+            '@media (min-width: 1400px)': {
+              minWidth: 'calc(1400px - 32px)',
+              maxWidth: 'calc(1400px - 32px)',
+            },
+          }}
         >
           {children}
         </Stack>
