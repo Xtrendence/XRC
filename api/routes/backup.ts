@@ -1,10 +1,12 @@
 import type { Express } from 'express';
 import { getFiles } from '../utils/getFiles';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, statSync, writeFileSync } from 'fs';
 import { validJSON } from '../utils/validJSON';
 import gradient from 'gradient-string';
 import { v4 } from 'uuid';
-import { TBackupSettings } from '../../@types/TBackupSettings';
+import { TBackupSettings } from '@types';
+import { validateNewBackupSetting } from '../utils/validateNewBackupSetting';
+import { formatPath } from '../utils/formatPath';
 
 const files = getFiles();
 
@@ -24,6 +26,19 @@ export function addBackupRoutes(app: Express) {
   app.post('/backup', (req, res) => {
     const { enabled, name, path, frequency, limit } = req.body;
 
+    const valid = validateNewBackupSetting({
+      enabled,
+      name,
+      path,
+      frequency,
+      limit,
+    });
+
+    if (!valid) {
+      res.status(400).send({ message: 'Invalid backup setting.' });
+      return;
+    }
+
     const content = readFileSync(files.backupSettingsFile.path, 'utf-8');
     const settings = (
       validJSON(content) ? JSON.parse(content) : []
@@ -31,7 +46,19 @@ export function addBackupRoutes(app: Express) {
 
     const id = v4();
 
-    settings.push({ id, enabled, name, path, frequency, limit });
+    const formattedPath = formatPath(path);
+
+    const isFile = !statSync(formattedPath).isDirectory();
+
+    settings.push({
+      id,
+      enabled,
+      name,
+      path: formattedPath,
+      frequency,
+      limit,
+      type: isFile ? 'file' : 'folder',
+    });
 
     writeFileSync(
       files.backupSettingsFile.path,
@@ -45,6 +72,19 @@ export function addBackupRoutes(app: Express) {
     const { id } = req.params;
     const { enabled, name, path, frequency, limit } = req.body;
 
+    const valid = validateNewBackupSetting({
+      enabled,
+      name,
+      path,
+      frequency,
+      limit,
+    });
+
+    if (!valid) {
+      res.status(400).send({ message: 'Invalid backup setting.' });
+      return;
+    }
+
     const content = readFileSync(files.backupSettingsFile.path, 'utf-8');
     const settings = (
       validJSON(content) ? JSON.parse(content) : []
@@ -52,10 +92,30 @@ export function addBackupRoutes(app: Express) {
 
     const index = settings.findIndex((s) => s.id === id);
 
+    const formattedPath = formatPath(path);
+
+    const isFile = !statSync(formattedPath).isDirectory();
+
     if (index > -1) {
-      settings[index] = { id, enabled, name, path, frequency, limit };
+      settings[index] = {
+        id,
+        enabled,
+        name,
+        path: formattedPath,
+        frequency,
+        limit,
+        type: isFile ? 'file' : 'folder',
+      };
     } else {
-      settings.push({ id, enabled, name, path, frequency, limit });
+      settings.push({
+        id,
+        enabled,
+        name,
+        path: formattedPath,
+        frequency,
+        limit,
+        type: isFile ? 'file' : 'folder',
+      });
     }
 
     writeFileSync(

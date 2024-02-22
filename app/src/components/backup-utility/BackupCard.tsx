@@ -1,112 +1,147 @@
 import {
+  Box,
   Button,
   Card,
-  IconButton,
-  Input,
+  Chip,
   Sheet,
   Stack,
   Switch,
   Tooltip,
   Typography,
 } from '@mui/joy';
-import { useState } from 'react';
-import toast from 'react-hot-toast';
-import { FaQuestionCircle } from 'react-icons/fa';
-import { TBackupSetting } from '../../../../@types/TBackupSettings';
+import { Dispatch, SetStateAction, useState } from 'react';
+import { FaClock, FaDatabase, FaFile, FaFolder } from 'react-icons/fa';
+import { BiSolidDetail } from 'react-icons/bi';
+import { TNewBackupSetting } from '@types';
+import { BackupCardForm } from './BackupCardForm';
 
 export function BackupCard({
   setting,
   onUpdate,
+  setSettingToDelete,
 }: {
-  setting: TBackupSetting;
-  onUpdate: (changes: TBackupSetting) => void;
+  setting: TNewBackupSetting;
+  onUpdate: (changes: TNewBackupSetting) => void;
+  setSettingToDelete: Dispatch<SetStateAction<TNewBackupSetting | undefined>>;
 }) {
-  const [changes, setChanges] = useState<TBackupSetting>(setting);
+  const [mode, setMode] = useState<'view' | 'edit'>('view');
+  const [changes, setChanges] = useState<TNewBackupSetting>(setting);
 
   return (
-    <Card>
-      <Stack
-        alignItems={'center'}
-        justifyContent={'space-between'}
-        gap={2}
-        sx={{
-          flexDirection: {
-            xs: 'column',
-            md: 'row',
-          },
-        }}
-      >
-        <Stack gap={2}>
+    <>
+      {mode === 'edit' ? (
+        <Card>
+          <BackupCardForm
+            type="update"
+            newSetting={changes}
+            setNewSetting={setChanges}
+            onConfirm={() => onUpdate(changes)}
+            setMode={setMode}
+          />
+        </Card>
+      ) : (
+        <Card>
           <Stack
+            alignItems={'center'}
+            justifyContent={'space-between'}
             gap={2}
             sx={{
-              alignItems: 'center',
               flexDirection: {
                 xs: 'column',
                 md: 'row',
               },
             }}
           >
-            <Input
-              onChange={(e) => {
-                try {
-                  const frequency = parseInt(e.target.value);
-
-                  setChanges((prev) => ({
-                    ...prev,
-                    frequency,
-                  }));
-                } catch (error) {
-                  toast.error('Invalid input type. Please enter a number.');
-                  console.log(error);
-                }
-              }}
-              placeholder="Frequency (s)..."
-              sx={{
-                maxWidth: {
-                  xs: 300,
-                  md: 200,
-                },
-                minWidth: {
-                  xs: 300,
-                  md: 200,
-                },
-              }}
-              startDecorator={
-                <Tooltip
-                  arrow
-                  placement="bottom-start"
-                  variant="soft"
-                  sx={{
-                    maxWidth: 300,
-                  }}
-                  title="How often the file or folder should be backed up. The time is in seconds."
-                >
-                  <IconButton tabIndex={-1}>
-                    <FaQuestionCircle />
-                  </IconButton>
-                </Tooltip>
-              }
-            />
-            <Input
-              onChange={(e) => {
-                setChanges((prev) => ({
-                  ...prev,
-                  path: e.target.value,
-                }));
-              }}
-              sx={{
-                maxWidth: {
-                  xs: 300,
-                  md: 400,
-                },
-                minWidth: {
-                  xs: 300,
-                  md: 400,
-                },
-              }}
-              placeholder="Path..."
-              startDecorator={
+            <Stack gap={2}>
+              <Stack
+                gap={2}
+                sx={{
+                  alignItems: 'center',
+                  flexDirection: {
+                    xs: 'column',
+                    md: 'row',
+                  },
+                }}
+              >
+                <Stack flexDirection={'row'} gap={2}>
+                  <Tooltip
+                    arrow
+                    placement="bottom-start"
+                    variant="soft"
+                    sx={{
+                      maxWidth: 300,
+                    }}
+                    title="How often the file or folder should be backed up. The time is in seconds."
+                  >
+                    <Chip
+                      sx={{
+                        minHeight: '36px',
+                        maxHeight: '36px',
+                        paddingTop: 0.1,
+                        borderWidth: 2,
+                        display: 'flex',
+                        flexDirection: 'row',
+                      }}
+                      size="lg"
+                      color="primary"
+                      variant="outlined"
+                      startDecorator={
+                        <Box
+                          sx={{
+                            marginBottom: -0.5,
+                            minWidth: 16,
+                            maxWidth: 16,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          <FaClock />
+                        </Box>
+                      }
+                    >
+                      {setting.frequency}s
+                    </Chip>
+                  </Tooltip>
+                  <Tooltip
+                    arrow
+                    placement="bottom-start"
+                    variant="soft"
+                    sx={{
+                      maxWidth: 300,
+                    }}
+                    title="The number of backups that should be kept before the oldest one is deleted each time once this limit has been reached."
+                  >
+                    <Chip
+                      sx={{
+                        minHeight: '36px',
+                        maxHeight: '36px',
+                        paddingTop: 0.1,
+                        borderWidth: 2,
+                        display: {
+                          xs: 'flex',
+                          md: 'none',
+                        },
+                        flexDirection: 'row',
+                      }}
+                      size="lg"
+                      color="warning"
+                      variant="outlined"
+                      startDecorator={
+                        <Box
+                          sx={{
+                            marginBottom: -0.5,
+                            minWidth: 16,
+                            maxWidth: 16,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          <FaDatabase />
+                        </Box>
+                      }
+                    >
+                      {setting.limit}
+                    </Chip>
+                  </Tooltip>
+                </Stack>
                 <Tooltip
                   arrow
                   placement="bottom-start"
@@ -116,49 +151,51 @@ export function BackupCard({
                   }}
                   title="Absolute path to the file or folder that should be backed up."
                 >
-                  <IconButton tabIndex={-1}>
-                    <FaQuestionCircle />
-                  </IconButton>
+                  <Chip
+                    sx={{
+                      minHeight: '36px',
+                      maxHeight: '36px',
+                      paddingTop: 0.1,
+                      borderWidth: 2,
+                      display: 'flex',
+                      flexDirection: 'row',
+                      maxWidth: {
+                        xs: 'calc(100dvw - 32px - 64px)',
+                        md: 500,
+                        lg: 800,
+                      },
+                    }}
+                    size="lg"
+                    color="neutral"
+                    variant="outlined"
+                    startDecorator={
+                      <Box
+                        sx={{
+                          marginBottom: -0.5,
+                          minWidth: 16,
+                          maxWidth: 16,
+                          boxSizing: 'border-box',
+                          marginRight: setting.type === 'folder' ? 0.5 : 0,
+                        }}
+                      >
+                        {setting.type === 'folder' ? <FaFolder /> : <FaFile />}
+                      </Box>
+                    }
+                  >
+                    {setting.path}
+                  </Chip>
                 </Tooltip>
-              }
-            />
-          </Stack>
-          <Stack
-            gap={2}
-            sx={{
-              alignItems: 'center',
-              flexDirection: {
-                xs: 'column',
-                md: 'row',
-              },
-            }}
-          >
-            <Input
-              onChange={(e) => {
-                try {
-                  const limit = parseInt(e.target.value);
-
-                  setChanges((prev) => ({
-                    ...prev,
-                    limit,
-                  }));
-                } catch (error) {
-                  toast.error('Invalid input type. Please enter a number.');
-                  console.log(error);
-                }
-              }}
-              placeholder="Limit..."
-              sx={{
-                maxWidth: {
-                  xs: 300,
-                  md: 200,
-                },
-                minWidth: {
-                  xs: 300,
-                  md: 200,
-                },
-              }}
-              startDecorator={
+              </Stack>
+              <Stack
+                gap={2}
+                sx={{
+                  alignItems: 'center',
+                  flexDirection: {
+                    xs: 'column',
+                    md: 'row',
+                  },
+                }}
+              >
                 <Tooltip
                   arrow
                   placement="bottom-start"
@@ -168,31 +205,37 @@ export function BackupCard({
                   }}
                   title="The number of backups that should be kept before the oldest one is deleted each time once this limit has been reached."
                 >
-                  <IconButton tabIndex={-1}>
-                    <FaQuestionCircle />
-                  </IconButton>
+                  <Chip
+                    sx={{
+                      minHeight: '36px',
+                      maxHeight: '36px',
+                      paddingTop: 0.1,
+                      borderWidth: 2,
+                      display: {
+                        xs: 'none',
+                        md: 'flex',
+                      },
+                      flexDirection: 'row',
+                    }}
+                    size="lg"
+                    color="warning"
+                    variant="outlined"
+                    startDecorator={
+                      <Box
+                        sx={{
+                          marginBottom: -0.5,
+                          minWidth: 16,
+                          maxWidth: 16,
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <FaDatabase />
+                      </Box>
+                    }
+                  >
+                    {setting.limit}
+                  </Chip>
                 </Tooltip>
-              }
-            />
-            <Input
-              onChange={(e) => {
-                setChanges((prev) => ({
-                  ...prev,
-                  name: e.target.value,
-                }));
-              }}
-              sx={{
-                maxWidth: {
-                  xs: 300,
-                  md: 400,
-                },
-                minWidth: {
-                  xs: 300,
-                  md: 400,
-                },
-              }}
-              placeholder="Name..."
-              startDecorator={
                 <Tooltip
                   arrow
                   placement="bottom-start"
@@ -202,52 +245,93 @@ export function BackupCard({
                   }}
                   title="Makes it easier to identify what the backup is for."
                 >
-                  <IconButton tabIndex={-1}>
-                    <FaQuestionCircle />
-                  </IconButton>
+                  <Chip
+                    sx={{
+                      minHeight: '36px',
+                      maxHeight: '36px',
+                      paddingTop: 0.1,
+                      borderWidth: 2,
+                      display: 'flex',
+                      flexDirection: 'row',
+                    }}
+                    size="lg"
+                    color="success"
+                    variant="outlined"
+                    startDecorator={
+                      <Box
+                        sx={{
+                          marginBottom: -0.5,
+                          minWidth: 16,
+                          maxWidth: 16,
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <BiSolidDetail />
+                      </Box>
+                    }
+                  >
+                    {setting.name}
+                  </Chip>
                 </Tooltip>
-              }
-            />
+              </Stack>
+            </Stack>
+            <Stack gap={2}>
+              <Sheet
+                variant="soft"
+                sx={{
+                  minWidth: 185,
+                  maxWidth: 185,
+                  borderRadius: 'md',
+                  padding: 1,
+                  maxHeight: '36px',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Typography fontWeight={'bold'} variant="plain">
+                  {changes?.enabled ? 'Enabled' : 'Disabled'}
+                </Typography>
+                <Switch
+                  size="lg"
+                  color={changes?.enabled ? 'success' : 'danger'}
+                  checked={changes?.enabled}
+                  onChange={(e) => {
+                    setChanges((prev) => ({
+                      ...prev,
+                      enabled: e.target.checked,
+                    }));
+                  }}
+                />
+              </Sheet>
+              <Stack flexDirection={'row'} gap={2}>
+                <Button
+                  variant="solid"
+                  color="danger"
+                  onClick={() => setSettingToDelete(setting)}
+                  sx={{
+                    width: '50%',
+                  }}
+                >
+                  Delete
+                </Button>
+                <Button
+                  variant="solid"
+                  color="primary"
+                  onClick={() => setMode('edit')}
+                  sx={{
+                    width: '50%',
+                  }}
+                >
+                  Edit
+                </Button>
+              </Stack>
+            </Stack>
           </Stack>
-        </Stack>
-        <Stack gap={2}>
-          <Sheet
-            variant="soft"
-            sx={{
-              borderRadius: 'md',
-              padding: 1,
-              maxHeight: '36px',
-              boxSizing: 'border-box',
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Typography fontWeight={'bold'} variant="plain">
-              {changes?.enabled ? 'Enabled' : 'Disabled'}
-            </Typography>
-            <Switch
-              size="lg"
-              color={changes?.enabled ? 'success' : 'danger'}
-              checked={changes?.enabled}
-              onChange={(e) => {
-                setChanges((prev) => ({
-                  ...prev,
-                  enabled: e.target.checked,
-                }));
-              }}
-            />
-          </Sheet>
-          <Button
-            variant="solid"
-            color="success"
-            onClick={() => onUpdate(changes)}
-          >
-            Update Backup Routine
-          </Button>
-        </Stack>
-      </Stack>
-    </Card>
+        </Card>
+      )}
+    </>
   );
 }

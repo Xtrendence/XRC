@@ -2,4 +2,6 @@
 
 A Node.js remote controller for machines running Windows with a variety of incredibly useful tools and features.
 
-![Screenshot](./assets/screenshot.png)
+![Screenshot](./assets/screenshots/Processes.png)
+![Screenshot](./assets/screenshots/ControlCenter.png)
+![Screenshot](./assets/screenshots/BackupUtility.png)

@@ -1,10 +1,14 @@
 import { Page } from '../common';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { apiUrl } from '../../globalVariables';
-import type { TBackupSetting, TBackupSettings } from '@types';
-import { CreateBackupCard, TNewBackupSetting } from './CreateBackupCard';
+import { apiUrl, toastOptions } from '../../globalVariables';
+import type { TBackupSettings, TNewBackupSetting } from '@types';
+import { CreateBackupCard } from './CreateBackupCard';
 import { BackupCard } from './BackupCard';
+import toast from 'react-hot-toast';
+import { validateNewBackupSetting } from '../../utils';
+import { Stack } from '@mui/joy';
+import ConfirmationModal from '../common/ConfirmationModal';
 
 export default function BackupUtility() {
   const [settings, setSettings] = useState<TBackupSettings>([]);
@@ -16,6 +20,8 @@ export default function BackupUtility() {
     frequency: undefined,
     limit: undefined,
   });
+
+  const [settingToDelete, setSettingToDelete] = useState<TNewBackupSetting>();
 
   const getSettings = () => {
     axios
@@ -29,11 +35,29 @@ export default function BackupUtility() {
   };
 
   const handleCreate = () => {
-    console.log(newSetting);
+    const valid = validateNewBackupSetting(newSetting, toast);
+
+    if (!valid) {
+      return;
+    }
+
+    // axios
+    //   .post(`${apiUrl}/backup`, newSetting)
+    //   .then((res) => {
+    //     setSettings(res.data.settings);
+    //     toast.success('Backup setting created successfully.', toastOptions);
+    //   })
+    //   .catch((error) => {
+    //     console.log(error);
+    //     toast.error(
+    //       'Could not create backup setting. Please try again and make sure all fields are filled out and the correct type.',
+    //       toastOptions
+    //     );
+    //   });
   };
 
-  const handleUpdate = (changes: TBackupSetting) => {
-    console.log(newSetting);
+  const handleUpdate = (changes: TNewBackupSetting) => {
+    console.log(changes);
   };
 
   useEffect(() => {
@@ -42,18 +66,45 @@ export default function BackupUtility() {
 
   return (
     <Page>
-      <CreateBackupCard
-        newSetting={newSetting}
-        setNewSetting={setNewSetting}
-        onCreate={handleCreate}
+      <ConfirmationModal
+        title="Delete Backup Routine"
+        content={`Are you sure you want to delete the "${settingToDelete?.name}" backup routine?`}
+        open={settingToDelete !== undefined}
+        setOpen={(value) => {
+          if (!value) {
+            setSettingToDelete(undefined);
+          }
+        }}
+        onConfirm={() => {
+          if (settingToDelete) {
+            axios
+              .delete(`${apiUrl}/backup/${settingToDelete.id}`)
+              .then(() => {
+                getSettings();
+              })
+              .catch((error) => {
+                toast.error('Failed to delete backup routine.', toastOptions);
+                console.log(error);
+              });
+          }
+        }}
+        danger
       />
-      {settings.map((setting) => (
-        <BackupCard
-          key={setting.id}
-          setting={setting}
-          onUpdate={handleUpdate}
+      <Stack gap={2}>
+        <CreateBackupCard
+          newSetting={newSetting}
+          setNewSetting={setNewSetting}
+          onCreate={handleCreate}
         />
-      ))}
+        {settings.map((setting) => (
+          <BackupCard
+            key={setting.id}
+            setting={setting}
+            onUpdate={handleUpdate}
+            setSettingToDelete={setSettingToDelete}
+          />
+        ))}
+      </Stack>
     </Page>
   );
 }

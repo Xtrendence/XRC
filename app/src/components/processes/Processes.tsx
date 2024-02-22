@@ -124,7 +124,7 @@ export default function Processes() {
                 setSelectedProcess(undefined);
               })
               .catch((error) => {
-                toast.error('Failed to kill process', toastOptions);
+                toast.error('Failed to kill process.', toastOptions);
                 console.log(error);
               });
           }
