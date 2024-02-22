@@ -1,10 +1,15 @@
-import { Typography } from '@mui/joy';
+import { Stack } from '@mui/joy';
 import { Page } from '../common';
+import { VolumeControl } from './VolumeControl';
+import { PowerControl } from './PowerControl';
 
 export default function ControlCenter() {
   return (
     <Page>
-      <Typography variant="plain">Control Center</Typography>
+      <Stack gap={2}>
+        <VolumeControl />
+        <PowerControl />
+      </Stack>
     </Page>
   );
 }
