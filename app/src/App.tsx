@@ -22,7 +22,7 @@ function App() {
         <Toaster />
         <Navigation />
         <Routes>
-          <Route path="/" element={<Processes />} />
+          <Route path="/" element={<Navigate to="/processes" />} />
           <Route path="/processes" element={<Processes />} />
           <Route path="/control-center" element={<ControlCenter />} />
           <Route path="/backup-utility" element={<BackupUtility />} />

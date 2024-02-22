@@ -12,12 +12,14 @@ export default function ConfirmationModal({
   open,
   setOpen,
   onConfirm,
+  danger = false,
   title = 'Confirmation',
   content,
 }: {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onConfirm: () => void;
+  danger?: boolean;
   title: string;
   content: string;
 }) {
@@ -38,7 +40,7 @@ export default function ConfirmationModal({
           <DialogActions>
             <Button
               variant="solid"
-              color="primary"
+              color={danger ? 'danger' : 'primary'}
               onClick={() => {
                 onConfirm();
                 setOpen(false);

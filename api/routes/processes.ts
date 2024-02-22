@@ -2,8 +2,11 @@ import type { Express } from 'express';
 import { executeCommand } from '../utils/executeCommand';
 import type { TProcess } from '@types';
 import { createHash } from 'crypto';
+import gradient from 'gradient-string';
 
 export function addProcessRoutes(app: Express) {
+  console.log(gradient('green', 'lime')('   [✓] Adding process routes.'));
+
   app.get('/processes', async (req, res) => {
     const list = (await executeCommand('tasklist /fo csv')) as string;
 
@@ -71,6 +74,8 @@ export function addProcessRoutes(app: Express) {
     }
 
     const result = await executeCommand(`taskkill /pid ${pid} /f`);
+
+    console.log(gradient('green', 'lime')(`Killing process "${pid}".`));
 
     res.status(200).send(result);
   });
