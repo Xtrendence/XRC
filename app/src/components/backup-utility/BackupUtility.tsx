@@ -9,8 +9,11 @@ import toast from 'react-hot-toast';
 import { validateNewBackupSetting } from '../../utils';
 import { Stack } from '@mui/joy';
 import ConfirmationModal from '../common/ConfirmationModal';
+import { useTitle } from '../../hooks/useTitle';
 
 export default function BackupUtility() {
+  useTitle('Backup Utility');
+
   const [settings, setSettings] = useState<TBackupSettings>([]);
 
   const [newSetting, setNewSetting] = useState<TNewBackupSetting>({

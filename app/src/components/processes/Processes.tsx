@@ -19,12 +19,15 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { mirage } from 'ldrs';
 import ConfirmationModal from '../common/ConfirmationModal';
 import toast from 'react-hot-toast';
+import { useTitle } from '../../hooks/useTitle';
 
 mirage.register();
 
 const paginationEnabled = false;
 
 export default function Processes() {
+  useTitle('Processes');
+
   const [processes, setProcesses] = useState<Array<TProcess>>([]);
   const [checksum, setChecksum] = useState<string>('');
 
