@@ -82,7 +82,7 @@ export function CreateBackupCard({
               startDecorator={
                 <Tooltip
                   arrow
-                  placement="right"
+                  placement="bottom-start"
                   variant="soft"
                   sx={{
                     maxWidth: 300,
@@ -116,7 +116,7 @@ export function CreateBackupCard({
               startDecorator={
                 <Tooltip
                   arrow
-                  placement="right"
+                  placement="bottom-start"
                   variant="soft"
                   sx={{
                     maxWidth: 300,
@@ -168,7 +168,7 @@ export function CreateBackupCard({
               startDecorator={
                 <Tooltip
                   arrow
-                  placement="right"
+                  placement="bottom-start"
                   variant="soft"
                   sx={{
                     maxWidth: 300,
@@ -202,7 +202,7 @@ export function CreateBackupCard({
               startDecorator={
                 <Tooltip
                   arrow
-                  placement="right"
+                  placement="bottom-start"
                   variant="soft"
                   sx={{
                     maxWidth: 300,
