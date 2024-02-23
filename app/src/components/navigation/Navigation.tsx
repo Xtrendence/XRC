@@ -39,7 +39,7 @@ export function NavigationTabs({
         background: 'transparent',
         overflow: 'hidden',
         '.Mui-selected': {
-          background: theme.palette.background.level1,
+          background: theme.palette.background.body,
         },
       })}
       onChange={(_, tab) => {

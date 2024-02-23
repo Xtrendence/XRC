@@ -12,7 +12,7 @@ const files = getFiles();
 
 export function addBackupRoutes(app: Express) {
   console.log(
-    gradient('brown', 'khaki', 'brown')('   [✓] Adding backup routes.')
+    gradient('brown', 'khaki', 'brown')('    [✓] Adding backup routes.')
   );
 
   app.get('/backup', (_, res) => {
@@ -51,12 +51,10 @@ export function addBackupRoutes(app: Express) {
     const exists = existsSync(formattedPath);
 
     if (!exists) {
-      res
-        .status(400)
-        .send({
-          message:
-            'Path does not exist. Make sure that file or directory exists before creating a backup routine for it.',
-        });
+      res.status(400).send({
+        message:
+          'Path does not exist. Make sure that file or directory exists before creating a backup routine for it.',
+      });
       return;
     }
 

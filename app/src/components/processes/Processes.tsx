@@ -100,7 +100,7 @@ export default function Processes() {
 
   useInterval(fetchProcesses, 5000, {
     immediate: true,
-    initialDelay: 200,
+    initialDelay: 10,
   });
 
   if (!processes.length) {

@@ -5,7 +5,7 @@ import { createHash } from 'crypto';
 import gradient from 'gradient-string';
 
 export function addProcessRoutes(app: Express) {
-  console.log(gradient('green', 'lime')('   [✓] Adding process routes.'));
+  console.log(gradient('green', 'lime')('    [✓] Adding process routes.'));
 
   app.get('/processes', async (req, res) => {
     const list = (await executeCommand('tasklist /fo csv')) as string;

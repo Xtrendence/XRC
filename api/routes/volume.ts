@@ -4,7 +4,7 @@ import { exec } from 'child_process';
 import gradient from 'gradient-string';
 
 export function addVolumeRoutes(app: Express) {
-  console.log(gradient('darkBlue', 'blue')('   [✓] Adding volume routes.'));
+  console.log(gradient('darkBlue', 'blue')('    [✓] Adding volume routes.'));
 
   let recentAudioChange = new Date().getTime();
 

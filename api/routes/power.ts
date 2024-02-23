@@ -3,7 +3,7 @@ import type { Express } from 'express';
 import gradient from 'gradient-string';
 
 export function addPowerRoutes(app: Express) {
-  console.log(gradient('red', 'crimson')('   [✓] Adding power routes.'));
+  console.log(gradient('red', 'crimson')('    [✓] Adding power routes.'));
 
   app.post('/shutdown', (_, res) => {
     exec('shutdown /s');

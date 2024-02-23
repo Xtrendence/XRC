@@ -1,6 +1,9 @@
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import type { TFiles } from '@types';
+import bcrypt from 'bcrypt';
+import { validJSON } from './validJSON';
+import forge from 'node-forge';
 
 const apiFolder = path.join(__dirname, '../');
 
@@ -8,6 +11,7 @@ export function getFiles() {
   const logsFolder = apiFolder + '/logs';
   const dataFolder = apiFolder + '/data';
   const settingsFolder = dataFolder + '/settings';
+  const settingsFile = settingsFolder + '/settings.cfg';
   const backupsFolder = dataFolder + '/backups';
   const backupSettingsFile = settingsFolder + '/backup.cfg';
 
@@ -27,6 +31,14 @@ export function getFiles() {
     settingsFolder: {
       type: 'folder',
       path: settingsFolder,
+    },
+    settingsFile: {
+      type: 'file',
+      path: settingsFile,
+      defaultContent: JSON.stringify({
+        password: undefined,
+        passwordChangeRequired: true,
+      }),
     },
     backupsFolder: {
       type: 'folder',
@@ -50,6 +62,40 @@ export function getFiles() {
   });
 
   return files;
+}
+
+export function checkSettings() {
+  const files = getFiles();
+
+  const settingsFile = files.settingsFile.path;
+
+  const content = readFileSync(settingsFile, 'utf-8');
+
+  const settings = validJSON(content) ? JSON.parse(content) : {};
+
+  if (settings?.password === undefined) {
+    settings.password = bcrypt.hashSync('admin', 12);
+    settings.passwordChangeRequired = true;
+  }
+
+  if (settings?.publicKey === undefined || settings?.privateKey === undefined) {
+    const keys = forge.pki.rsa.generateKeyPair({ bits: 2048 });
+    settings.publicKey = forge.pki.publicKeyToRSAPublicKeyPem(keys.publicKey);
+    settings.privateKey = forge.pki.privateKeyToPem(keys.privateKey);
+  }
+
+  if (
+    settings?.decryptionKey === undefined ||
+    settings?.decryptionIv === undefined
+  ) {
+    const decryptionKey = forge.util.bytesToHex(forge.random.getBytesSync(16));
+    const decryptionIv = forge.util.bytesToHex(forge.random.getBytesSync(16));
+
+    settings.decryptionKey = decryptionKey;
+    settings.decryptionIv = decryptionIv;
+  }
+
+  writeFileSync(settingsFile, JSON.stringify(settings, null, 4));
 }
 
 export function getBinaries() {
