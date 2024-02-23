@@ -14,6 +14,7 @@ export function getFiles() {
   const settingsFile = settingsFolder + '/settings.cfg';
   const backupsFolder = dataFolder + '/backups';
   const backupSettingsFile = settingsFolder + '/backup.cfg';
+  const sessionsFile = dataFolder + '/sessions.db';
 
   const files = {
     apiFolder: {
@@ -47,6 +48,11 @@ export function getFiles() {
     backupSettingsFile: {
       type: 'file',
       path: backupSettingsFile,
+      defaultContent: JSON.stringify([]),
+    },
+    sessionsFile: {
+      type: 'file',
+      path: sessionsFile,
       defaultContent: JSON.stringify([]),
     },
   } satisfies TFiles;

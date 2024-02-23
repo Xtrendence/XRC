@@ -8,6 +8,7 @@ import { addVolumeRoutes } from './routes/volume';
 import { addPowerRoutes } from './routes/power';
 import { addBackupRoutes } from './routes/backup';
 import { addSettingsRoutes } from './routes/settings';
+import { addSessionsRoutes } from './routes/sessions';
 
 dotenv.config({
   path: '.env',
@@ -31,6 +32,7 @@ addProcessRoutes(app);
 addVolumeRoutes(app);
 addPowerRoutes(app);
 addBackupRoutes(app);
+addSessionsRoutes(app);
 addSettingsRoutes(app);
 
 console.log(

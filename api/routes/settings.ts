@@ -9,6 +9,20 @@ const files = getFiles();
 export function addSettingsRoutes(app: Express) {
   console.log(gradient('gray', 'white')('    [✓] Adding settings routes.'));
 
+  app.get('/settings', (_, res) => {
+    checkSettings();
+    const content = readFileSync(files.settingsFile.path, 'utf-8');
+    const settings = JSON.parse(content);
+
+    if (settings.passwordChangeRequired === true) {
+      res.send({ passwordChangeRequired: true });
+      return;
+    }
+
+    res.send({ settings });
+  });
+
+  // Public route
   app.get('/key/public', (_, res) => {
     checkSettings();
     const content = readFileSync(files.settingsFile.path, 'utf-8');
