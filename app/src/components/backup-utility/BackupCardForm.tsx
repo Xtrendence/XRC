@@ -73,7 +73,7 @@ export function BackupCardForm({
                   console.log(error);
                 }
               }}
-              placeholder="Frequency (s)..."
+              placeholder="Frequency (m)..."
               sx={{
                 maxWidth: {
                   xs: 300,
@@ -92,7 +92,7 @@ export function BackupCardForm({
                   sx={{
                     maxWidth: 300,
                   }}
-                  title="How often the file or folder should be backed up. The time is in seconds."
+                  title="How often the file or folder should be backed up. The time is in minutes."
                 >
                   <IconButton
                     tabIndex={-1}

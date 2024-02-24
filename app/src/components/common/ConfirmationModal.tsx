@@ -15,6 +15,7 @@ export default function ConfirmationModal({
   danger = false,
   title = 'Confirmation',
   content,
+  actions,
 }: {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -22,6 +23,7 @@ export default function ConfirmationModal({
   danger?: boolean;
   title: string;
   content: string;
+  actions?: React.ReactNode;
 }) {
   return (
     <>
@@ -55,6 +57,7 @@ export default function ConfirmationModal({
             >
               Cancel
             </Button>
+            {actions}
           </DialogActions>
         </ModalDialog>
       </Modal>

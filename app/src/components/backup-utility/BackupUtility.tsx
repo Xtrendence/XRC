@@ -7,7 +7,7 @@ import { CreateBackupCard } from './CreateBackupCard';
 import { BackupCard } from './BackupCard';
 import toast from 'react-hot-toast';
 import { validateNewBackupSetting } from '../../utils';
-import { Stack } from '@mui/joy';
+import { Sheet, Stack, Switch, Tooltip, Typography } from '@mui/joy';
 import ConfirmationModal from '../common/ConfirmationModal';
 import { useTitle } from '../../hooks/useTitle';
 
@@ -28,6 +28,7 @@ export default function BackupUtility() {
     useState<TNewBackupSetting>(initialNewSetting);
 
   const [settingToDelete, setSettingToDelete] = useState<TNewBackupSetting>();
+  const [keepFiles, setKeepFiles] = useState(true);
 
   const getSettings = () => {
     axios
@@ -113,12 +114,17 @@ export default function BackupUtility() {
         setOpen={(value) => {
           if (!value) {
             setSettingToDelete(undefined);
+            setKeepFiles(true);
           }
         }}
         onConfirm={() => {
           if (settingToDelete) {
             axios
-              .delete(`${apiUrl}/backup/${settingToDelete.id}`)
+              .delete(`${apiUrl}/backup/${settingToDelete.id}`, {
+                data: {
+                  keepFiles,
+                },
+              })
               .then(() => {
                 getSettings();
               })
@@ -127,7 +133,52 @@ export default function BackupUtility() {
                 console.log(error);
               });
           }
+
+          setSettingToDelete(undefined);
+          setKeepFiles(true);
         }}
+        actions={
+          <Stack flexGrow={1}>
+            <Tooltip
+              arrow
+              placement="bottom-start"
+              variant="soft"
+              sx={{
+                maxWidth: 300,
+              }}
+              title="You may opt to keep the files that have already been backed up. If you choose to keep the files, they will not be deleted when the backup routine is deleted. If you choose not to keep the files, they will be deleted along with the backup routine."
+            >
+              <Sheet
+                variant="soft"
+                sx={{
+                  minWidth: 170,
+                  maxWidth: 170,
+                  gap: 2,
+                  borderRadius: 'sm',
+                  padding: 1,
+                  maxHeight: '36px',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Typography fontWeight={'bold'} variant="plain">
+                  Keep Files
+                </Typography>
+                <Switch
+                  size="lg"
+                  color={keepFiles ? 'success' : 'danger'}
+                  checked={keepFiles}
+                  onChange={(e) => {
+                    setKeepFiles(e.target.checked);
+                  }}
+                />
+              </Sheet>
+            </Tooltip>
+          </Stack>
+        }
         danger
       />
       <Stack gap={2}>

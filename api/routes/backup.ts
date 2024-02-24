@@ -1,12 +1,13 @@
 import type { Express } from 'express';
 import { getFiles } from '../utils/getFiles';
-import { existsSync, readFileSync, statSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { validJSON } from '../utils/validJSON';
 import gradient from 'gradient-string';
 import { v4 } from 'uuid';
 import { TBackupSettings } from '@types';
 import { validateNewBackupSetting } from '../utils/validateNewBackupSetting';
 import { formatPath } from '../utils/formatPath';
+import { performBackups } from '../utils/performBackups';
 
 const files = getFiles();
 
@@ -14,6 +15,12 @@ export function addBackupRoutes(app: Express) {
   console.log(
     gradient('brown', 'khaki', 'brown')('    [✓] Adding backup routes.')
   );
+
+  const interval = process.env.DEV_MODE === 'true' ? 5 : 60;
+
+  performBackups();
+
+  setInterval(performBackups, 1_000 * interval);
 
   app.get('/backup', (_, res) => {
     const content = readFileSync(files.backupSettingsFile.path, 'utf-8');
@@ -74,6 +81,8 @@ export function addBackupRoutes(app: Express) {
       files.backupSettingsFile.path,
       JSON.stringify(settings, null, 4)
     );
+
+    performBackups();
 
     res.send({ settings });
   });
@@ -140,6 +149,8 @@ export function addBackupRoutes(app: Express) {
       JSON.stringify(settings, null, 4)
     );
 
+    performBackups();
+
     res.send({ settings });
   });
 
@@ -158,11 +169,14 @@ export function addBackupRoutes(app: Express) {
       JSON.stringify(settings, null, 4)
     );
 
+    performBackups();
+
     res.send({ settings });
   });
 
   app.delete('/backup/:id', (req, res) => {
     const { id } = req.params;
+    const { keepFiles } = req.body;
 
     const content = readFileSync(files.backupSettingsFile.path, 'utf-8');
     const settings = (
@@ -179,6 +193,11 @@ export function addBackupRoutes(app: Express) {
       files.backupSettingsFile.path,
       JSON.stringify(settings, null, 4)
     );
+
+    if (keepFiles === false) {
+      const backupFolder = `${files.backupsFolder.path}/${id}`;
+      rmSync(backupFolder, { recursive: true, force: true });
+    }
 
     res.send({ settings });
   });

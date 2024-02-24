@@ -74,7 +74,7 @@ export function BackupCard({
                     sx={{
                       maxWidth: 300,
                     }}
-                    title="How often the file or folder should be backed up. The time is in seconds."
+                    title="How often the file or folder should be backed up. The time is in minutes."
                   >
                     <Chip
                       sx={{
@@ -101,7 +101,7 @@ export function BackupCard({
                         </Box>
                       }
                     >
-                      {setting.frequency}s
+                      {setting.frequency}m
                     </Chip>
                   </Tooltip>
                   <Tooltip
