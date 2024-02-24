@@ -13,7 +13,7 @@ export function getFiles() {
   const settingsFolder = dataFolder + '/settings';
   const settingsFile = settingsFolder + '/settings.cfg';
   const backupsFolder = dataFolder + '/backups';
-  const backupSettingsFile = settingsFolder + '/backup.cfg';
+  const backupRoutinesFile = settingsFolder + '/backup.cfg';
   const sessionsFile = dataFolder + '/sessions.db';
 
   const files = {
@@ -45,9 +45,9 @@ export function getFiles() {
       type: 'folder',
       path: backupsFolder,
     },
-    backupSettingsFile: {
+    backupRoutinesFile: {
       type: 'file',
-      path: backupSettingsFile,
+      path: backupRoutinesFile,
       defaultContent: JSON.stringify([]),
     },
     sessionsFile: {

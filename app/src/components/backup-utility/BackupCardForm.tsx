@@ -8,7 +8,7 @@ import {
   Switch,
   Button,
 } from '@mui/joy';
-import { TNewBackupSetting } from '@types';
+import { TNewBackupRoutine } from '@types';
 import { Dispatch, SetStateAction } from 'react';
 import toast from 'react-hot-toast';
 import { FaClock, FaDatabase, FaFolder } from 'react-icons/fa';
@@ -16,16 +16,16 @@ import { BiSolidDetail } from 'react-icons/bi';
 
 export function BackupCardForm({
   type,
-  newSetting,
-  setNewSetting,
-  originalSetting,
+  newRoutine,
+  setNewRoutine,
+  originalRoutine,
   onConfirm,
   setMode,
 }: {
   type: 'create' | 'update';
-  newSetting?: TNewBackupSetting;
-  setNewSetting: Dispatch<SetStateAction<TNewBackupSetting>>;
-  originalSetting?: TNewBackupSetting;
+  newRoutine?: TNewBackupRoutine;
+  setNewRoutine: Dispatch<SetStateAction<TNewBackupRoutine>>;
+  originalRoutine?: TNewBackupRoutine;
   onConfirm: () => void;
   setMode?: Dispatch<SetStateAction<'view' | 'edit'>>;
 }) {
@@ -59,12 +59,12 @@ export function BackupCardForm({
             }}
           >
             <Input
-              value={newSetting?.frequency || ''}
+              value={newRoutine?.frequency || ''}
               onChange={(e) => {
                 try {
                   const frequency = parseInt(e.target.value);
 
-                  setNewSetting((prev) => ({
+                  setNewRoutine((prev) => ({
                     ...prev,
                     frequency,
                   }));
@@ -106,9 +106,9 @@ export function BackupCardForm({
               }
             />
             <Input
-              value={newSetting?.path || ''}
+              value={newRoutine?.path || ''}
               onChange={(e) => {
-                setNewSetting((prev) => ({
+                setNewRoutine((prev) => ({
                   ...prev,
                   path: e.target.value,
                 }));
@@ -157,12 +157,12 @@ export function BackupCardForm({
             }}
           >
             <Input
-              value={newSetting?.limit || ''}
+              value={newRoutine?.limit || ''}
               onChange={(e) => {
                 try {
                   const limit = parseInt(e.target.value);
 
-                  setNewSetting((prev) => ({
+                  setNewRoutine((prev) => ({
                     ...prev,
                     limit,
                   }));
@@ -204,9 +204,9 @@ export function BackupCardForm({
               }
             />
             <Input
-              value={newSetting?.name || ''}
+              value={newRoutine?.name || ''}
               onChange={(e) => {
-                setNewSetting((prev) => ({
+                setNewRoutine((prev) => ({
                   ...prev,
                   name: e.target.value,
                 }));
@@ -262,14 +262,14 @@ export function BackupCardForm({
             }}
           >
             <Typography fontWeight={'bold'} variant="plain">
-              {newSetting?.enabled ? 'Enabled' : 'Disabled'}
+              {newRoutine?.enabled ? 'Enabled' : 'Disabled'}
             </Typography>
             <Switch
               size="lg"
-              color={newSetting?.enabled ? 'success' : 'danger'}
-              checked={newSetting?.enabled}
+              color={newRoutine?.enabled ? 'success' : 'danger'}
+              checked={newRoutine?.enabled}
               onChange={(e) => {
-                setNewSetting((prev) => ({
+                setNewRoutine((prev) => ({
                   ...prev,
                   enabled: e.target.checked,
                 }));
@@ -293,7 +293,7 @@ export function BackupCardForm({
                   type="button"
                   color="neutral"
                   onClick={() => {
-                    setNewSetting((prev) => ({ ...prev, ...originalSetting }));
+                    setNewRoutine((prev) => ({ ...prev, ...originalRoutine }));
                     setMode?.('view');
                   }}
                   sx={{

@@ -8,11 +8,11 @@ import {
   rmSync,
 } from 'fs';
 import { getFiles } from './getFiles';
-import { TBackupSetting, TBackupSettings } from '../../@types/TBackupSettings';
+import { TBackupRoutine, TBackupRoutines } from '../../@types/TBackupRoutine';
 
 const files = getFiles();
 
-function getBackups(routine: TBackupSetting) {
+function getBackups(routine: TBackupRoutine) {
   const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
 
   if (!existsSync(backupFolder)) {
@@ -36,7 +36,7 @@ function getBackups(routine: TBackupSetting) {
   return backups;
 }
 
-function checkLimit(routine: TBackupSetting) {
+function checkLimit(routine: TBackupRoutine) {
   const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
 
   const backups = getBackups(routine);
@@ -49,8 +49,8 @@ function checkLimit(routine: TBackupSetting) {
 
 export function performBackups() {
   const files = getFiles();
-  const content = readFileSync(files.backupSettingsFile.path, 'utf-8');
-  const routines: TBackupSettings = JSON.parse(content);
+  const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+  const routines: TBackupRoutines = JSON.parse(content);
 
   routines
     .filter((routine) => routine.enabled === true)

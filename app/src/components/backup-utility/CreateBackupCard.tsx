@@ -1,23 +1,23 @@
 import { Card } from '@mui/joy';
-import { TNewBackupSetting } from '@types';
+import { TNewBackupRoutine } from '@types';
 import { Dispatch, SetStateAction } from 'react';
 import { BackupCardForm } from './BackupCardForm';
 
 export function CreateBackupCard({
-  newSetting,
-  setNewSetting,
+  newRoutine,
+  setNewRoutine,
   onCreate,
 }: {
-  newSetting?: TNewBackupSetting;
-  setNewSetting: Dispatch<SetStateAction<TNewBackupSetting>>;
+  newRoutine?: TNewBackupRoutine;
+  setNewRoutine: Dispatch<SetStateAction<TNewBackupRoutine>>;
   onCreate: () => void;
 }) {
   return (
     <Card>
       <BackupCardForm
         type="create"
-        newSetting={newSetting}
-        setNewSetting={setNewSetting}
+        newRoutine={newRoutine}
+        setNewRoutine={setNewRoutine}
         onConfirm={onCreate}
       />
     </Card>

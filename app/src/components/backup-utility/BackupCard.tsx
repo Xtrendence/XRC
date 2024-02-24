@@ -12,22 +12,22 @@ import {
 import { Dispatch, SetStateAction, useState } from 'react';
 import { FaClock, FaDatabase, FaFile, FaFolder } from 'react-icons/fa';
 import { BiSolidDetail } from 'react-icons/bi';
-import { TNewBackupSetting } from '@types';
+import { TNewBackupRoutine } from '@types';
 import { BackupCardForm } from './BackupCardForm';
 
 export function BackupCard({
-  setting,
+  routine,
   onUpdate,
-  setSettingToDelete,
+  setRoutineToDelete,
 }: {
-  setting: TNewBackupSetting;
-  onUpdate: (changes: TNewBackupSetting) => void;
-  setSettingToDelete: Dispatch<SetStateAction<TNewBackupSetting | undefined>>;
+  routine: TNewBackupRoutine;
+  onUpdate: (changes: TNewBackupRoutine) => void;
+  setRoutineToDelete: Dispatch<SetStateAction<TNewBackupRoutine | undefined>>;
 }) {
-  const originalSetting = setting;
+  const originalRoutine = routine;
 
   const [mode, setMode] = useState<'view' | 'edit'>('view');
-  const [changes, setChanges] = useState<TNewBackupSetting>(setting);
+  const [changes, setChanges] = useState<TNewBackupRoutine>(routine);
 
   return (
     <>
@@ -35,9 +35,9 @@ export function BackupCard({
         <Card>
           <BackupCardForm
             type="update"
-            newSetting={changes}
-            setNewSetting={setChanges}
-            originalSetting={originalSetting}
+            newRoutine={changes}
+            setNewRoutine={setChanges}
+            originalRoutine={originalRoutine}
             onConfirm={() => onUpdate(changes)}
             setMode={setMode}
           />
@@ -101,7 +101,7 @@ export function BackupCard({
                         </Box>
                       }
                     >
-                      {setting.frequency}m
+                      {routine.frequency}m
                     </Chip>
                   </Tooltip>
                   <Tooltip
@@ -141,7 +141,7 @@ export function BackupCard({
                         </Box>
                       }
                     >
-                      {setting.limit}
+                      {routine.limit}
                     </Chip>
                   </Tooltip>
                 </Stack>
@@ -178,14 +178,14 @@ export function BackupCard({
                           minWidth: 16,
                           maxWidth: 16,
                           boxSizing: 'border-box',
-                          marginRight: setting.type === 'folder' ? 0.5 : 0,
+                          marginRight: routine.type === 'folder' ? 0.5 : 0,
                         }}
                       >
-                        {setting.type === 'folder' ? <FaFolder /> : <FaFile />}
+                        {routine.type === 'folder' ? <FaFolder /> : <FaFile />}
                       </Box>
                     }
                   >
-                    {setting.path}
+                    {routine.path}
                   </Chip>
                 </Tooltip>
               </Stack>
@@ -236,7 +236,7 @@ export function BackupCard({
                       </Box>
                     }
                   >
-                    {setting.limit}
+                    {routine.limit}
                   </Chip>
                 </Tooltip>
                 <Tooltip
@@ -273,7 +273,7 @@ export function BackupCard({
                       </Box>
                     }
                   >
-                    {setting.name}
+                    {routine.name}
                   </Chip>
                 </Tooltip>
               </Stack>
@@ -328,7 +328,7 @@ export function BackupCard({
                 <Button
                   variant="solid"
                   color="danger"
-                  onClick={() => setSettingToDelete(setting)}
+                  onClick={() => setRoutineToDelete(routine)}
                   sx={{
                     width: '50%',
                   }}

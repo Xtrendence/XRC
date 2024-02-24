@@ -1,1 +1,1 @@
-export * from './validateNewBackupSetting';
+export * from './validateNewBackupRoutine';

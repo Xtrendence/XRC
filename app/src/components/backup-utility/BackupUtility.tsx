@@ -2,16 +2,16 @@ import { Page } from '../common';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { apiUrl, toastOptions } from '../../globalVariables';
-import type { TBackupSettings, TNewBackupSetting } from '@types';
+import type { TBackupRoutines, TNewBackupRoutine } from '@types';
 import { CreateBackupCard } from './CreateBackupCard';
 import { BackupCard } from './BackupCard';
 import toast from 'react-hot-toast';
-import { validateNewBackupSetting } from '../../utils';
+import { validateNewBackupRoutine } from '../../utils';
 import { Sheet, Stack, Switch, Tooltip, Typography } from '@mui/joy';
 import ConfirmationModal from '../common/ConfirmationModal';
 import { useTitle } from '../../hooks/useTitle';
 
-const initialNewSetting: TNewBackupSetting = {
+const initialNewRoutine: TNewBackupRoutine = {
   enabled: false,
   name: '',
   path: '',
@@ -22,20 +22,20 @@ const initialNewSetting: TNewBackupSetting = {
 export default function BackupUtility() {
   useTitle('Backup Utility');
 
-  const [settings, setSettings] = useState<TBackupSettings>([]);
+  const [routines, setRoutines] = useState<TBackupRoutines>([]);
 
-  const [newSetting, setNewSetting] =
-    useState<TNewBackupSetting>(initialNewSetting);
+  const [newRoutine, setNewRoutine] =
+    useState<TNewBackupRoutine>(initialNewRoutine);
 
-  const [settingToDelete, setSettingToDelete] = useState<TNewBackupSetting>();
+  const [routineToDelete, setRoutineToDelete] = useState<TNewBackupRoutine>();
   const [keepFiles, setKeepFiles] = useState(true);
 
-  const getSettings = () => {
+  const getRoutines = () => {
     axios
       .get(`${apiUrl}/backup`)
       .then((res) => {
-        const data: TBackupSettings = res.data.settings;
-        setSettings(data.sort((a, b) => a.name.localeCompare(b.name)));
+        const data: TBackupRoutines = res.data.routines;
+        setRoutines(data.sort((a, b) => a.name.localeCompare(b.name)));
       })
       .catch((error) => {
         console.log(error);
@@ -43,19 +43,19 @@ export default function BackupUtility() {
   };
 
   const handleCreate = () => {
-    const valid = validateNewBackupSetting(newSetting, toast);
+    const valid = validateNewBackupRoutine(newRoutine, toast);
 
     if (!valid) {
       return;
     }
 
     axios
-      .post(`${apiUrl}/backup`, newSetting)
+      .post(`${apiUrl}/backup`, newRoutine)
       .then((res) => {
-        const data: TBackupSettings = res.data.settings;
-        setNewSetting(initialNewSetting);
-        setSettings(data.sort((a, b) => a.name.localeCompare(b.name)));
-        toast.success('Backup setting created successfully.', toastOptions);
+        const data: TBackupRoutines = res.data.routines;
+        setNewRoutine(initialNewRoutine);
+        setRoutines(data.sort((a, b) => a.name.localeCompare(b.name)));
+        toast.success('Backup routine created successfully.', toastOptions);
       })
       .catch((error) => {
         console.log(error);
@@ -66,14 +66,14 @@ export default function BackupUtility() {
         }
 
         toast.error(
-          'Could not create backup setting. Please try again and make sure all fields are filled out and the correct type.',
+          'Could not create backup routine. Please try again and make sure all fields are filled out and the correct type.',
           toastOptions
         );
       });
   };
 
-  const handleUpdate = (changes: TNewBackupSetting) => {
-    const valid = validateNewBackupSetting(changes, toast);
+  const handleUpdate = (changes: TNewBackupRoutine) => {
+    const valid = validateNewBackupRoutine(changes, toast);
 
     if (!valid) {
       return;
@@ -82,9 +82,9 @@ export default function BackupUtility() {
     axios
       .put(`${apiUrl}/backup/${changes.id}`, changes)
       .then((res) => {
-        const data: TBackupSettings = res.data.settings;
-        setSettings(data.sort((a, b) => a.name.localeCompare(b.name)));
-        toast.success('Backup setting updated successfully.', toastOptions);
+        const data: TBackupRoutines = res.data.routines;
+        setRoutines(data.sort((a, b) => a.name.localeCompare(b.name)));
+        toast.success('Backup routine updated successfully.', toastOptions);
       })
       .catch((error) => {
         console.log(error);
@@ -95,38 +95,38 @@ export default function BackupUtility() {
         }
 
         toast.error(
-          'Could not update backup setting. Please try again and make sure all fields are filled out and the correct type.',
+          'Could not update backup routine. Please try again and make sure all fields are filled out and the correct type.',
           toastOptions
         );
       });
   };
 
   useEffect(() => {
-    getSettings();
+    getRoutines();
   }, []);
 
   return (
     <Page>
       <ConfirmationModal
         title="Delete Backup Routine"
-        content={`Are you sure you want to delete the "${settingToDelete?.name}" backup routine?`}
-        open={settingToDelete !== undefined}
+        content={`Are you sure you want to delete the "${routineToDelete?.name}" backup routine?`}
+        open={routineToDelete !== undefined}
         setOpen={(value) => {
           if (!value) {
-            setSettingToDelete(undefined);
+            setRoutineToDelete(undefined);
             setKeepFiles(true);
           }
         }}
         onConfirm={() => {
-          if (settingToDelete) {
+          if (routineToDelete) {
             axios
-              .delete(`${apiUrl}/backup/${settingToDelete.id}`, {
+              .delete(`${apiUrl}/backup/${routineToDelete.id}`, {
                 data: {
                   keepFiles,
                 },
               })
               .then(() => {
-                getSettings();
+                getRoutines();
               })
               .catch((error) => {
                 toast.error('Failed to delete backup routine.', toastOptions);
@@ -134,7 +134,7 @@ export default function BackupUtility() {
               });
           }
 
-          setSettingToDelete(undefined);
+          setRoutineToDelete(undefined);
           setKeepFiles(true);
         }}
         actions={
@@ -183,16 +183,16 @@ export default function BackupUtility() {
       />
       <Stack gap={2}>
         <CreateBackupCard
-          newSetting={newSetting}
-          setNewSetting={setNewSetting}
+          newRoutine={newRoutine}
+          setNewRoutine={setNewRoutine}
           onCreate={handleCreate}
         />
-        {settings.map((setting) => (
+        {routines.map((routine) => (
           <BackupCard
-            key={setting.id}
-            setting={setting}
+            key={routine.id}
+            routine={routine}
             onUpdate={handleUpdate}
-            setSettingToDelete={setSettingToDelete}
+            setRoutineToDelete={setRoutineToDelete}
           />
         ))}
       </Stack>

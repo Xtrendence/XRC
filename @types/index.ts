@@ -1,4 +1,4 @@
 export * from './TFile';
-export * from './TBackupSettings';
+export * from './TBackupRoutine';
 export * from './TProcess';
 export * from './TSession';

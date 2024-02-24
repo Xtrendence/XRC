@@ -4,8 +4,8 @@ import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { validJSON } from '../utils/validJSON';
 import gradient from 'gradient-string';
 import { v4 } from 'uuid';
-import { TBackupSettings } from '@types';
-import { validateNewBackupSetting } from '../utils/validateNewBackupSetting';
+import { TBackupRoutines } from '@types';
+import { validateNewBackupRoutine } from '../utils/validateNewBackupRoutine';
 import { formatPath } from '../utils/formatPath';
 import { performBackups } from '../utils/performBackups';
 
@@ -23,17 +23,17 @@ export function addBackupRoutes(app: Express) {
   setInterval(performBackups, 1_000 * interval);
 
   app.get('/backup', (_, res) => {
-    const content = readFileSync(files.backupSettingsFile.path, 'utf-8');
-    const settings = (
+    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+    const routines = (
       validJSON(content) ? JSON.parse(content) : []
-    ) as TBackupSettings[];
-    res.send({ settings });
+    ) as TBackupRoutines[];
+    res.send({ routines });
   });
 
   app.post('/backup', (req, res) => {
     const { enabled, name, path, frequency, limit } = req.body;
 
-    const valid = validateNewBackupSetting({
+    const valid = validateNewBackupRoutine({
       enabled,
       name,
       path,
@@ -42,14 +42,14 @@ export function addBackupRoutes(app: Express) {
     });
 
     if (!valid) {
-      res.status(400).send({ message: 'Invalid backup setting.' });
+      res.status(400).send({ message: 'Invalid backup routine.' });
       return;
     }
 
-    const content = readFileSync(files.backupSettingsFile.path, 'utf-8');
-    const settings = (
+    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+    const routines = (
       validJSON(content) ? JSON.parse(content) : []
-    ) as TBackupSettings;
+    ) as TBackupRoutines;
 
     const id = v4();
 
@@ -67,7 +67,7 @@ export function addBackupRoutes(app: Express) {
 
     const isFile = !statSync(formattedPath).isDirectory();
 
-    settings.push({
+    routines.push({
       id,
       enabled,
       name,
@@ -78,20 +78,20 @@ export function addBackupRoutes(app: Express) {
     });
 
     writeFileSync(
-      files.backupSettingsFile.path,
-      JSON.stringify(settings, null, 4)
+      files.backupRoutinesFile.path,
+      JSON.stringify(routines, null, 4)
     );
 
     performBackups();
 
-    res.send({ settings });
+    res.send({ routines });
   });
 
   app.put('/backup/:id', (req, res) => {
     const { id } = req.params;
     const { enabled, name, path, frequency, limit } = req.body;
 
-    const valid = validateNewBackupSetting({
+    const valid = validateNewBackupRoutine({
       enabled,
       name,
       path,
@@ -100,16 +100,16 @@ export function addBackupRoutes(app: Express) {
     });
 
     if (!valid) {
-      res.status(400).send({ message: 'Invalid backup setting.' });
+      res.status(400).send({ message: 'Invalid backup routines.' });
       return;
     }
 
-    const content = readFileSync(files.backupSettingsFile.path, 'utf-8');
-    const settings = (
+    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+    const routines = (
       validJSON(content) ? JSON.parse(content) : []
-    ) as TBackupSettings;
+    ) as TBackupRoutines;
 
-    const index = settings.findIndex((s) => s.id === id);
+    const index = routines.findIndex((s) => s.id === id);
 
     const formattedPath = formatPath(path);
 
@@ -123,7 +123,7 @@ export function addBackupRoutes(app: Express) {
     const isFile = !statSync(formattedPath).isDirectory();
 
     if (index > -1) {
-      settings[index] = {
+      routines[index] = {
         id,
         enabled,
         name,
@@ -133,7 +133,7 @@ export function addBackupRoutes(app: Express) {
         type: isFile ? 'file' : 'folder',
       };
     } else {
-      settings.push({
+      routines.push({
         id,
         enabled,
         name,
@@ -145,53 +145,53 @@ export function addBackupRoutes(app: Express) {
     }
 
     writeFileSync(
-      files.backupSettingsFile.path,
-      JSON.stringify(settings, null, 4)
+      files.backupRoutinesFile.path,
+      JSON.stringify(routines, null, 4)
     );
 
     performBackups();
 
-    res.send({ settings });
+    res.send({ routines });
   });
 
   app.put('/backup/all', (req, res) => {
     const { enabled } = req.body;
 
-    const content = readFileSync(files.backupSettingsFile.path, 'utf-8');
-    const settings = (
+    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+    const routines = (
       validJSON(content) ? JSON.parse(content) : []
-    ) as TBackupSettings;
+    ) as TBackupRoutines;
 
-    settings.forEach((s) => (s.enabled = enabled));
+    routines.forEach((s) => (s.enabled = enabled));
 
     writeFileSync(
-      files.backupSettingsFile.path,
-      JSON.stringify(settings, null, 4)
+      files.backupRoutinesFile.path,
+      JSON.stringify(routines, null, 4)
     );
 
     performBackups();
 
-    res.send({ settings });
+    res.send({ routines });
   });
 
   app.delete('/backup/:id', (req, res) => {
     const { id } = req.params;
     const { keepFiles } = req.body;
 
-    const content = readFileSync(files.backupSettingsFile.path, 'utf-8');
-    const settings = (
+    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+    const routines = (
       validJSON(content) ? JSON.parse(content) : []
-    ) as TBackupSettings;
+    ) as TBackupRoutines;
 
-    const index = settings.findIndex((s) => s.id === id);
+    const index = routines.findIndex((s) => s.id === id);
 
     if (index > -1) {
-      settings.splice(index, 1);
+      routines.splice(index, 1);
     }
 
     writeFileSync(
-      files.backupSettingsFile.path,
-      JSON.stringify(settings, null, 4)
+      files.backupRoutinesFile.path,
+      JSON.stringify(routines, null, 4)
     );
 
     if (keepFiles === false) {
@@ -199,11 +199,11 @@ export function addBackupRoutes(app: Express) {
       rmSync(backupFolder, { recursive: true, force: true });
     }
 
-    res.send({ settings });
+    res.send({ routines });
   });
 
   app.delete('/backup/all', (req, res) => {
-    writeFileSync(files.backupSettingsFile.path, JSON.stringify([], null, 4));
-    res.send({ settings: [] });
+    writeFileSync(files.backupRoutinesFile.path, JSON.stringify([], null, 4));
+    res.send({ routines: [] });
   });
 }

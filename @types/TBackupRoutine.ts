@@ -1,4 +1,4 @@
-export type TBackupSetting = {
+export type TBackupRoutine = {
   id: string;
   enabled: boolean;
   name: string;
@@ -8,9 +8,9 @@ export type TBackupSetting = {
   type: 'folder' | 'file';
 };
 
-export type TBackupSettings = Array<TBackupSetting>;
+export type TBackupRoutines = Array<TBackupRoutine>;
 
-export type TNewBackupSetting = {
+export type TNewBackupRoutine = {
   id?: string;
   enabled?: boolean;
   name?: string;
