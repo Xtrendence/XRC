@@ -6,6 +6,7 @@ export type TBackupRoutine = {
   frequency: number;
   limit: number;
   type: 'folder' | 'file';
+  dependencies?: Array<string>;
 };
 
 export type TBackupRoutines = Array<TBackupRoutine>;
@@ -18,4 +19,5 @@ export type TNewBackupRoutine = {
   frequency?: number;
   limit?: number;
   type?: 'folder' | 'file';
+  dependencies?: Array<string>;
 };

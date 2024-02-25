@@ -9,6 +9,9 @@ import {
 } from 'fs';
 import { getFiles } from './getFiles';
 import { TBackupRoutine, TBackupRoutines } from '../../@types/TBackupRoutine';
+import { getProcesses } from './getProcesses';
+import { TProcess } from '../../@types/TProcess';
+import { hashElement } from 'folder-hash';
 
 const files = getFiles();
 
@@ -47,6 +50,51 @@ function checkLimit(routine: TBackupRoutine) {
   }
 }
 
+async function hasChanges(
+  backupFolder: string,
+  latestBackup: string,
+  routine: TBackupRoutine
+) {
+  try {
+    const latestBackupFolder = `${backupFolder}/${latestBackup}`;
+
+    const latestBackupContent =
+      routine.type === 'file'
+        ? `${latestBackupFolder}/${readdirSync(latestBackupFolder, 'utf-8')[0]}`
+        : latestBackupFolder;
+
+    const latestBackupHash = await hashElement(latestBackupContent, {
+      encoding: 'hex',
+    });
+
+    const currentHash = await hashElement(routine.path, {
+      encoding: 'hex',
+    });
+
+    if (routine.type === 'file') {
+      if (latestBackupHash.hash === currentHash.hash) {
+        return false;
+      }
+    } else {
+      const latestBackupHashes = latestBackupHash.children
+        .map((child) => child.hash)
+        .sort();
+      const currentHashes = currentHash.children
+        .map((child) => child.hash)
+        .sort();
+
+      if (latestBackupHashes.join() === currentHashes.join()) {
+        return false;
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.log(error);
+    return true;
+  }
+}
+
 export function performBackups() {
   const files = getFiles();
   const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
@@ -54,12 +102,40 @@ export function performBackups() {
 
   routines
     .filter((routine) => routine.enabled === true)
-    .forEach((routine) => {
+    .forEach(async (routine) => {
       const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
 
-      const date = new Date();
-
       const latestBackup = getBackups(routine).pop();
+
+      if (existsSync(backupFolder) && latestBackup) {
+        const checkChanges = await hasChanges(
+          backupFolder,
+          latestBackup,
+          routine
+        );
+
+        if (!checkChanges) {
+          return;
+        }
+      }
+
+      const hasDependencies =
+        routine?.dependencies && routine?.dependencies?.length > 0;
+
+      if (hasDependencies) {
+        const processes = (await getProcesses()) as Array<TProcess>;
+        const dependencies = routine.dependencies as Array<string>;
+
+        const isRunning = dependencies.every((dependency) => {
+          return processes.some((process) => process.name === dependency);
+        });
+
+        if (!isRunning) {
+          return;
+        }
+      }
+
+      const date = new Date();
 
       const requiresBackup =
         process.env.DEV_MODE === 'true' ||

@@ -1,36 +1,15 @@
 import type { Express } from 'express';
 import { executeCommand } from '../utils/executeCommand';
-import type { TProcess } from '@types';
 import { createHash } from 'crypto';
 import gradient from 'gradient-string';
+import { getProcesses } from '../utils/getProcesses';
+import { TProcess } from '@types';
 
 export function addProcessRoutes(app: Express) {
   console.log(gradient('green', 'lime')('    [✓] Adding process routes.'));
 
   app.get('/processes', async (req, res) => {
-    const list = (await executeCommand('tasklist /fo csv')) as string;
-
-    const response: Array<TProcess> = [];
-
-    list.split('\n').forEach((line, index) => {
-      if (index > 1) {
-        const [name, pid, sessionName, sessionNumber, memoryUsage] =
-          line.split('","');
-
-        if (name && pid && sessionName && sessionNumber && memoryUsage) {
-          const process: TProcess = {
-            name: name.replace('"', ''),
-            pid: Number(pid),
-            sessionName,
-            sessionNumber: Number(sessionNumber),
-            memoryUsage:
-              Number(memoryUsage.replace(' K"', '').replace(/,/g, '')) || 0,
-          };
-
-          response.push(process);
-        }
-      }
-    });
+    const response = (await getProcesses()) as Array<TProcess>;
 
     const responseChecksum = createHash('sha256')
       .update(

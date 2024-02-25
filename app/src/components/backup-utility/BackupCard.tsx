@@ -10,16 +10,21 @@ import {
   Typography,
 } from '@mui/joy';
 import { Dispatch, SetStateAction, useState } from 'react';
-import { FaClock, FaDatabase, FaFile, FaFolder } from 'react-icons/fa';
+import { FaClock, FaDatabase, FaFile, FaFolder, FaLink } from 'react-icons/fa';
 import { BiSolidDetail } from 'react-icons/bi';
 import { TNewBackupRoutine } from '@types';
 import { BackupCardForm } from './BackupCardForm';
 
 export function BackupCard({
+  processOptions,
   routine,
   onUpdate,
   setRoutineToDelete,
 }: {
+  processOptions?: Array<{
+    label: string;
+    id: number;
+  }>;
   routine: TNewBackupRoutine;
   onUpdate: (changes: TNewBackupRoutine) => void;
   setRoutineToDelete: Dispatch<SetStateAction<TNewBackupRoutine | undefined>>;
@@ -34,6 +39,7 @@ export function BackupCard({
       {mode === 'edit' ? (
         <Card>
           <BackupCardForm
+            processOptions={processOptions || []}
             type="update"
             newRoutine={changes}
             setNewRoutine={setChanges}
@@ -109,6 +115,50 @@ export function BackupCard({
                     placement="bottom-start"
                     variant="soft"
                     sx={{
+                      maxWidth: 380,
+                    }}
+                    title={
+                      routine?.dependencies && routine.dependencies?.length > 0
+                        ? `This routine depends on the following processes running: ${routine?.dependencies?.join(
+                            ', '
+                          )}`
+                        : 'This routine does not depend on any processes running.'
+                    }
+                  >
+                    <Chip
+                      sx={(theme) => ({
+                        minHeight: '36px',
+                        maxHeight: '36px',
+                        paddingTop: 0.1,
+                        borderWidth: 2,
+                        display: 'flex',
+                        flexDirection: 'row',
+                        borderColor:
+                          routine?.dependencies &&
+                          routine.dependencies?.length > 0
+                            ? 'rgb(164, 145, 194)'
+                            : theme.palette.neutral[700],
+                      })}
+                      size="lg"
+                      variant="outlined"
+                    >
+                      <Box
+                        sx={{
+                          marginBottom: -0.5,
+                          minWidth: 16,
+                          maxWidth: 16,
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <FaLink />
+                      </Box>
+                    </Chip>
+                  </Tooltip>
+                  <Tooltip
+                    arrow
+                    placement="bottom-start"
+                    variant="soft"
+                    sx={{
                       maxWidth: 300,
                     }}
                     title="The number of backups that should be kept before the oldest one is deleted each time once this limit has been reached."
@@ -155,21 +205,21 @@ export function BackupCard({
                   title="Absolute path to the file or folder that should be backed up."
                 >
                   <Chip
-                    sx={{
+                    sx={(theme) => ({
                       minHeight: '36px',
                       maxHeight: '36px',
                       paddingTop: 0.1,
                       borderWidth: 2,
                       display: 'flex',
                       flexDirection: 'row',
+                      borderColor: theme.palette.neutral[500],
                       maxWidth: {
                         xs: 'calc(100dvw - 32px - 64px)',
-                        md: 500,
+                        md: 470,
                         lg: 800,
                       },
-                    }}
+                    })}
                     size="lg"
-                    color="neutral"
                     variant="outlined"
                     startDecorator={
                       <Box

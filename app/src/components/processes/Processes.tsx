@@ -81,8 +81,6 @@ export default function Processes() {
   );
 
   const fetchProcesses = async () => {
-    console.log('Fetching processes...');
-
     axios
       .get(`${apiUrl}/processes?checksum=${checksum}`)
       .then((response) => {

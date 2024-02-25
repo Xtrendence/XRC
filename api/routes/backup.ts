@@ -4,7 +4,7 @@ import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { validJSON } from '../utils/validJSON';
 import gradient from 'gradient-string';
 import { v4 } from 'uuid';
-import { TBackupRoutines } from '@types';
+import { TBackupRoutine, TBackupRoutines } from '@types';
 import { validateNewBackupRoutine } from '../utils/validateNewBackupRoutine';
 import { formatPath } from '../utils/formatPath';
 import { performBackups } from '../utils/performBackups';
@@ -31,7 +31,7 @@ export function addBackupRoutes(app: Express) {
   });
 
   app.post('/backup', (req, res) => {
-    const { enabled, name, path, frequency, limit } = req.body;
+    const { enabled, name, path, frequency, limit, dependencies } = req.body;
 
     const valid = validateNewBackupRoutine({
       enabled,
@@ -67,14 +67,21 @@ export function addBackupRoutes(app: Express) {
 
     const isFile = !statSync(formattedPath).isDirectory();
 
+    const routinePath = isFile
+      ? formattedPath
+      : formattedPath.charAt(formattedPath.length - 1) === '/'
+      ? formattedPath
+      : `${formattedPath}/`;
+
     routines.push({
       id,
       enabled,
       name,
-      path: formattedPath,
+      path: routinePath,
       frequency,
       limit,
       type: isFile ? 'file' : 'folder',
+      dependencies: dependencies || [],
     });
 
     writeFileSync(
@@ -89,7 +96,7 @@ export function addBackupRoutes(app: Express) {
 
   app.put('/backup/:id', (req, res) => {
     const { id } = req.params;
-    const { enabled, name, path, frequency, limit } = req.body;
+    const { enabled, name, path, frequency, limit, dependencies } = req.body;
 
     const valid = validateNewBackupRoutine({
       enabled,
@@ -122,26 +129,27 @@ export function addBackupRoutes(app: Express) {
 
     const isFile = !statSync(formattedPath).isDirectory();
 
+    const routinePath = isFile
+      ? formattedPath
+      : formattedPath.charAt(formattedPath.length - 1) === '/'
+      ? formattedPath
+      : `${formattedPath}/`;
+
+    const routine = {
+      id,
+      enabled,
+      name,
+      path: routinePath,
+      frequency,
+      limit,
+      type: isFile ? 'file' : 'folder',
+      dependencies: dependencies || [],
+    } satisfies TBackupRoutine;
+
     if (index > -1) {
-      routines[index] = {
-        id,
-        enabled,
-        name,
-        path: formattedPath,
-        frequency,
-        limit,
-        type: isFile ? 'file' : 'folder',
-      };
+      routines[index] = routine;
     } else {
-      routines.push({
-        id,
-        enabled,
-        name,
-        path: formattedPath,
-        frequency,
-        limit,
-        type: isFile ? 'file' : 'folder',
-      });
+      routines.push(routine);
     }
 
     writeFileSync(

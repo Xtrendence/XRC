@@ -1,8 +1,8 @@
 import { Page } from '../common';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { apiUrl, toastOptions } from '../../globalVariables';
-import type { TBackupRoutines, TNewBackupRoutine } from '@types';
+import type { TBackupRoutines, TNewBackupRoutine, TProcess } from '@types';
 import { CreateBackupCard } from './CreateBackupCard';
 import { BackupCard } from './BackupCard';
 import toast from 'react-hot-toast';
@@ -10,6 +10,7 @@ import { validateNewBackupRoutine } from '../../utils';
 import { Sheet, Stack, Switch, Tooltip, Typography } from '@mui/joy';
 import ConfirmationModal from '../common/ConfirmationModal';
 import { useTitle } from '../../hooks/useTitle';
+import { useInterval } from '../../hooks/useInterval';
 
 const initialNewRoutine: TNewBackupRoutine = {
   enabled: false,
@@ -105,6 +106,45 @@ export default function BackupUtility() {
     getRoutines();
   }, []);
 
+  const [processes, setProcesses] = useState<Array<TProcess>>([]);
+  const [checksum, setChecksum] = useState<string>('');
+
+  const processOptions = useMemo(() => {
+    const result: Array<{
+      label: string;
+      id: number;
+    }> = [];
+
+    processes.forEach((process, index) => {
+      if (!result.some((p) => p.label === process.name)) {
+        result.push({ label: process.name, id: index });
+      }
+    });
+
+    return result;
+  }, [processes]);
+
+  const fetchProcesses = async () => {
+    axios
+      .get(`${apiUrl}/processes?checksum=${checksum}`)
+      .then((response) => {
+        const { data } = response;
+
+        if (data.changed === true) {
+          setProcesses(data.processes);
+          setChecksum(data.checksum);
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+  useInterval(fetchProcesses, 5000, {
+    immediate: true,
+    initialDelay: 10,
+  });
+
   return (
     <Page>
       <ConfirmationModal
@@ -183,6 +223,7 @@ export default function BackupUtility() {
       />
       <Stack gap={2}>
         <CreateBackupCard
+          processOptions={processOptions}
           newRoutine={newRoutine}
           setNewRoutine={setNewRoutine}
           onCreate={handleCreate}
@@ -190,6 +231,7 @@ export default function BackupUtility() {
         {routines.map((routine) => (
           <BackupCard
             key={routine.id}
+            processOptions={processOptions}
             routine={routine}
             onUpdate={handleUpdate}
             setRoutineToDelete={setRoutineToDelete}

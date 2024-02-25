@@ -8,13 +8,15 @@ import {
   Switch,
   Button,
 } from '@mui/joy';
-import { TNewBackupRoutine } from '@types';
-import { Dispatch, SetStateAction } from 'react';
+import { TNewBackupRoutine, TProcess } from '@types';
+import { Dispatch, SetStateAction, useState } from 'react';
 import toast from 'react-hot-toast';
-import { FaClock, FaDatabase, FaFolder } from 'react-icons/fa';
+import { FaClock, FaDatabase, FaFolder, FaLink } from 'react-icons/fa';
 import { BiSolidDetail } from 'react-icons/bi';
+import DependenciesModal from './DependenciesModal';
 
 export function BackupCardForm({
+  processOptions,
   type,
   newRoutine,
   setNewRoutine,
@@ -22,6 +24,10 @@ export function BackupCardForm({
   onConfirm,
   setMode,
 }: {
+  processOptions: Array<{
+    label: string;
+    id: number;
+  }>;
   type: 'create' | 'update';
   newRoutine?: TNewBackupRoutine;
   setNewRoutine: Dispatch<SetStateAction<TNewBackupRoutine>>;
@@ -29,6 +35,12 @@ export function BackupCardForm({
   onConfirm: () => void;
   setMode?: Dispatch<SetStateAction<'view' | 'edit'>>;
 }) {
+  const [dependencies, setDependencies] = useState<Array<string>>(
+    newRoutine?.dependencies || []
+  );
+
+  const [dependenciesModalOpen, setDependenciesModalOpen] = useState(false);
+
   return (
     <form
       onSubmit={(e) => {
@@ -36,6 +48,20 @@ export function BackupCardForm({
         e.stopPropagation();
       }}
     >
+      <DependenciesModal
+        processOptions={processOptions}
+        value={dependencies}
+        setValue={setDependencies}
+        open={dependenciesModalOpen}
+        setOpen={setDependenciesModalOpen}
+        onConfirm={() => {
+          setNewRoutine((prev) => ({
+            ...prev,
+            dependencies,
+          }));
+        }}
+        onCancel={() => setDependencies(originalRoutine?.dependencies || [])}
+      />
       <Stack
         alignItems={'center'}
         justifyContent={'space-between'}
@@ -77,11 +103,11 @@ export function BackupCardForm({
               sx={{
                 maxWidth: {
                   xs: 300,
-                  md: 200,
+                  md: 210,
                 },
                 minWidth: {
                   xs: 300,
-                  md: 200,
+                  md: 210,
                 },
               }}
               startDecorator={
@@ -101,6 +127,37 @@ export function BackupCardForm({
                     })}
                   >
                     <FaClock />
+                  </IconButton>
+                </Tooltip>
+              }
+              endDecorator={
+                <Tooltip
+                  arrow
+                  placement="bottom-start"
+                  variant="soft"
+                  sx={{
+                    maxWidth: 380,
+                  }}
+                  title={
+                    newRoutine?.dependencies &&
+                    newRoutine?.dependencies.length > 0
+                      ? `Once saved, this routine will depend on the following processes running: ${newRoutine?.dependencies?.join(
+                          ', '
+                        )}`
+                      : `Specify which processes should be running for the backup to occur, if any.`
+                  }
+                >
+                  <IconButton
+                    tabIndex={-1}
+                    sx={{
+                      color:
+                        dependencies.length > 0
+                          ? 'rgb(164, 145, 194)'
+                          : 'inherit',
+                    }}
+                    onClick={() => setDependenciesModalOpen(true)}
+                  >
+                    <FaLink />
                   </IconButton>
                 </Tooltip>
               }
@@ -175,11 +232,11 @@ export function BackupCardForm({
               sx={{
                 maxWidth: {
                   xs: 300,
-                  md: 200,
+                  md: 210,
                 },
                 minWidth: {
                   xs: 300,
-                  md: 200,
+                  md: 210,
                 },
               }}
               startDecorator={
