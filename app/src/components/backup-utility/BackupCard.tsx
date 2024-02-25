@@ -10,16 +10,20 @@ import {
   Typography,
 } from '@mui/joy';
 import { Dispatch, SetStateAction, useState } from 'react';
-import { FaClock, FaDatabase, FaFile, FaFolder, FaLink } from 'react-icons/fa';
+import { FaClock, FaFile, FaFolder, FaLink } from 'react-icons/fa';
 import { BiSolidDetail } from 'react-icons/bi';
+import { BsFillFileEarmarkLockFill } from 'react-icons/bs';
 import { TNewBackupRoutine } from '@types';
 import { BackupCardForm } from './BackupCardForm';
+import { FaHardDrive } from 'react-icons/fa6';
+import { formatFileSize } from '../../utils';
 
 export function BackupCard({
   processOptions,
   routine,
   onUpdate,
   setRoutineToDelete,
+  backupSize,
 }: {
   processOptions?: Array<{
     label: string;
@@ -28,11 +32,14 @@ export function BackupCard({
   routine: TNewBackupRoutine;
   onUpdate: (changes: TNewBackupRoutine) => void;
   setRoutineToDelete: Dispatch<SetStateAction<TNewBackupRoutine | undefined>>;
+  backupSize?: number;
 }) {
   const originalRoutine = routine;
 
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [changes, setChanges] = useState<TNewBackupRoutine>(routine);
+
+  const formattedSize = formatFileSize(backupSize || 0);
 
   return (
     <>
@@ -187,7 +194,7 @@ export function BackupCard({
                             boxSizing: 'border-box',
                           }}
                         >
-                          <FaDatabase />
+                          <BsFillFileEarmarkLockFill />
                         </Box>
                       }
                     >
@@ -282,11 +289,51 @@ export function BackupCard({
                           boxSizing: 'border-box',
                         }}
                       >
-                        <FaDatabase />
+                        <BsFillFileEarmarkLockFill />
                       </Box>
                     }
                   >
                     {routine.limit}
+                  </Chip>
+                </Tooltip>
+                <Tooltip
+                  arrow
+                  placement="bottom-start"
+                  variant="soft"
+                  sx={{
+                    maxWidth: 300,
+                  }}
+                  title="The total amount of storage space that this backup routine is using."
+                >
+                  <Chip
+                    sx={{
+                      minHeight: '36px',
+                      maxHeight: '36px',
+                      paddingTop: 0.1,
+                      borderWidth: 2,
+                      borderColor: 'rgb(189, 126, 126)',
+                      display: {
+                        xs: 'none',
+                        md: 'flex',
+                      },
+                      flexDirection: 'row',
+                    }}
+                    size="lg"
+                    variant="outlined"
+                    startDecorator={
+                      <Box
+                        sx={{
+                          marginBottom: -0.5,
+                          minWidth: 16,
+                          maxWidth: 16,
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <FaHardDrive />
+                      </Box>
+                    }
+                  >
+                    {formattedSize}
                   </Chip>
                 </Tooltip>
                 <Tooltip

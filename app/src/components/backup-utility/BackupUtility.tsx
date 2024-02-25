@@ -24,6 +24,9 @@ export default function BackupUtility() {
   useTitle('Backup Utility');
 
   const [routines, setRoutines] = useState<TBackupRoutines>([]);
+  const [backupSizes, setBackupSizes] = useState<
+    Array<{ id: string; size: number }>
+  >([]);
 
   const [newRoutine, setNewRoutine] =
     useState<TNewBackupRoutine>(initialNewRoutine);
@@ -37,6 +40,7 @@ export default function BackupUtility() {
       .then((res) => {
         const data: TBackupRoutines = res.data.routines;
         setRoutines(data.sort((a, b) => a.name.localeCompare(b.name)));
+        setBackupSizes(res.data.sizes);
       })
       .catch((error) => {
         console.log(error);
@@ -235,6 +239,7 @@ export default function BackupUtility() {
             routine={routine}
             onUpdate={handleUpdate}
             setRoutineToDelete={setRoutineToDelete}
+            backupSize={backupSizes.find((s) => s.id === routine.id)?.size || 0}
           />
         ))}
       </Stack>

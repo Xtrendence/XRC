@@ -8,8 +8,29 @@ import { TBackupRoutine, TBackupRoutines } from '@types';
 import { validateNewBackupRoutine } from '../utils/validateNewBackupRoutine';
 import { formatPath } from '../utils/formatPath';
 import { performBackups } from '../utils/performBackups';
+import { folderSize } from '../utils/folderSize';
 
 const files = getFiles();
+
+async function getSizes(routines: TBackupRoutines) {
+  const sizes: Array<{
+    id: string;
+    size: number;
+  }> = [];
+
+  for (const routine of routines) {
+    const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
+
+    if (!existsSync(backupFolder)) {
+      continue;
+    }
+
+    const size = (await folderSize(backupFolder)) as number;
+    sizes.push({ id: routine.id, size: size || 0 });
+  }
+
+  return sizes;
+}
 
 export function addBackupRoutes(app: Express) {
   console.log(
@@ -22,15 +43,18 @@ export function addBackupRoutes(app: Express) {
 
   setInterval(performBackups, 1_000 * interval);
 
-  app.get('/backup', (_, res) => {
+  app.get('/backup', async (_, res) => {
     const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
     const routines = (
       validJSON(content) ? JSON.parse(content) : []
-    ) as TBackupRoutines[];
-    res.send({ routines });
+    ) as Array<TBackupRoutine>;
+
+    const sizes = await getSizes(routines);
+
+    res.send({ routines, sizes });
   });
 
-  app.post('/backup', (req, res) => {
+  app.post('/backup', async (req, res) => {
     const { enabled, name, path, frequency, limit, dependencies } = req.body;
 
     const valid = validateNewBackupRoutine({
@@ -91,10 +115,12 @@ export function addBackupRoutes(app: Express) {
 
     performBackups();
 
-    res.send({ routines });
+    const sizes = await getSizes(routines);
+
+    res.send({ routines, sizes });
   });
 
-  app.put('/backup/:id', (req, res) => {
+  app.put('/backup/:id', async (req, res) => {
     const { id } = req.params;
     const { enabled, name, path, frequency, limit, dependencies } = req.body;
 
@@ -159,10 +185,12 @@ export function addBackupRoutes(app: Express) {
 
     performBackups();
 
-    res.send({ routines });
+    const sizes = await getSizes(routines);
+
+    res.send({ routines, sizes });
   });
 
-  app.put('/backup/all', (req, res) => {
+  app.put('/backup/all', async (req, res) => {
     const { enabled } = req.body;
 
     const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
@@ -179,10 +207,12 @@ export function addBackupRoutes(app: Express) {
 
     performBackups();
 
-    res.send({ routines });
+    const sizes = await getSizes(routines);
+
+    res.send({ routines, sizes });
   });
 
-  app.delete('/backup/:id', (req, res) => {
+  app.delete('/backup/:id', async (req, res) => {
     const { id } = req.params;
     const { keepFiles } = req.body;
 
@@ -207,11 +237,13 @@ export function addBackupRoutes(app: Express) {
       rmSync(backupFolder, { recursive: true, force: true });
     }
 
-    res.send({ routines });
+    const sizes = await getSizes(routines);
+
+    res.send({ routines, sizes });
   });
 
-  app.delete('/backup/all', (req, res) => {
+  app.delete('/backup/all', (_, res) => {
     writeFileSync(files.backupRoutinesFile.path, JSON.stringify([], null, 4));
-    res.send({ routines: [] });
+    res.send({ routines: [], sizes: [] });
   });
 }

@@ -8,11 +8,12 @@ import {
   Switch,
   Button,
 } from '@mui/joy';
-import { TNewBackupRoutine, TProcess } from '@types';
+import { TNewBackupRoutine } from '@types';
 import { Dispatch, SetStateAction, useState } from 'react';
 import toast from 'react-hot-toast';
-import { FaClock, FaDatabase, FaFolder, FaLink } from 'react-icons/fa';
+import { FaClock, FaFolder, FaLink } from 'react-icons/fa';
 import { BiSolidDetail } from 'react-icons/bi';
+import { BsFileEarmarkLockFill } from 'react-icons/bs';
 import DependenciesModal from './DependenciesModal';
 
 export function BackupCardForm({
@@ -255,7 +256,7 @@ export function BackupCardForm({
                       color: theme.palette.warning[300],
                     })}
                   >
-                    <FaDatabase />
+                    <BsFileEarmarkLockFill />
                   </IconButton>
                 </Tooltip>
               }
