@@ -7,13 +7,14 @@ import { validSession } from '../utils/validSession';
 import { decryptRsa } from '../utils/decryptRsa';
 import bcrypt from 'bcrypt';
 import forge from 'node-forge';
+import { publicRoutes } from '../middleware/auth';
 
 const files = getFiles();
 
 export function addSessionsRoutes(app: Express) {
   console.log(gradient('pink', 'purple')('    [✓] Adding sessions routes.'));
 
-  app.get('/session/logout/:token', (req, res) => {
+  app.get('/session/logout/:token/single', (req, res) => {
     const token = req.params.token;
 
     const content = readFileSync(files.sessionsFile.path, 'utf-8');
@@ -29,15 +30,34 @@ export function addSessionsRoutes(app: Express) {
     res.status(200).send({ message: 'Logged out.' });
   });
 
-  // Public route
-  app.get('/session/validate/:token', (req, res) => {
-    const token = req.params.token;
-    const valid = validSession(token);
-    res.status(200).send({ valid });
+  app.get('/session/logout/:token/all', (_, res) => {
+    writeFileSync(files.sessionsFile.path, JSON.stringify([]));
+
+    res.status(200).send({ message: 'Logged out everywhere.' });
   });
 
-  // Public route
-  app.post('/session/login', (req, res) => {
+  app.get(publicRoutes.validateToken, (req, res) => {
+    const token = req.headers?.authorization?.split('Bearer ')[1];
+
+    if (!token) return res.status(401).send({ valid: false });
+
+    const valid = validSession(token);
+
+    if (valid) {
+      const content = readFileSync(files.settingsFile.path, 'utf-8');
+      const settings = JSON.parse(content);
+
+      res.status(200).send({
+        valid,
+        token: token,
+        passwordChangeRequired: settings?.passwordChangeRequired,
+      });
+    } else {
+      res.status(401).send({ valid });
+    }
+  });
+
+  app.post(publicRoutes.login, (req, res) => {
     const encryptedPassword = req.body?.password;
     const password = decryptRsa(encryptedPassword);
 
@@ -60,7 +80,10 @@ export function addSessionsRoutes(app: Express) {
 
       writeFileSync(files.sessionsFile.path, JSON.stringify(sessions, null, 4));
 
-      res.status(200).send({ token });
+      res.status(200).send({
+        token,
+        passwordChangeRequired: settings?.passwordChangeRequired,
+      });
     } else {
       res.status(401).send({ message: 'Invalid password.' });
     }

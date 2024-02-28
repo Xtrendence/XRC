@@ -9,6 +9,7 @@ import { addPowerRoutes } from './routes/power';
 import { addBackupRoutes } from './routes/backup';
 import { addSettingsRoutes } from './routes/settings';
 import { addSessionsRoutes } from './routes/sessions';
+import { addAuthMiddleware } from './middleware/auth';
 
 dotenv.config({
   path: '.env',
@@ -25,6 +26,8 @@ app.get('/', (_, res) => {
 });
 
 checkSettings();
+
+addAuthMiddleware(app);
 
 console.log(gradient('cyan', 'blue')('\n[-] Adding routes...'));
 

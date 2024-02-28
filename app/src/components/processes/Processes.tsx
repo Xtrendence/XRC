@@ -82,7 +82,11 @@ export default function Processes() {
 
   const fetchProcesses = async () => {
     axios
-      .get(`${apiUrl}/processes?checksum=${checksum}`)
+      .get(`${apiUrl}/processes?checksum=${checksum}`, {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.getItem('loginToken'),
+        },
+      })
       .then((response) => {
         const { data } = response;
 
@@ -119,7 +123,11 @@ export default function Processes() {
         onConfirm={() => {
           if (selectedProcess) {
             axios
-              .delete(`${apiUrl}/processes/${selectedProcess.pid}`)
+              .delete(`${apiUrl}/processes/${selectedProcess.pid}`, {
+                headers: {
+                  Authorization: 'Bearer ' + localStorage.getItem('loginToken'),
+                },
+              })
               .then(() => {
                 fetchProcesses();
                 setSelectedProcess(undefined);
@@ -151,9 +159,9 @@ export default function Processes() {
             pr: 2,
             width: 'calc(100% - 16px)',
             minWidth: '800px',
-            '& thead th:nth-child(1)': { width: 80 },
-            '& thead th:nth-child(2)': { width: 100, textAlign: 'center' },
-            '& thead th:nth-child(4)': { width: 140, textAlign: 'center' },
+            '& thead th:nth-of-type(1)': { width: 80 },
+            '& thead th:nth-of-type(2)': { width: 100, textAlign: 'center' },
+            '& thead th:nth-of-type(4)': { width: 140, textAlign: 'center' },
           })}
         >
           <thead style={{ lineHeight: 4 }}>

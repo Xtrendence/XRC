@@ -4,6 +4,7 @@ import { getFiles, checkSettings } from '../utils/getFiles';
 import gradient from 'gradient-string';
 import { decryptRsa } from '../utils/decryptRsa';
 import bcrypt from 'bcrypt';
+import { publicRoutes } from '../middleware/auth';
 
 const files = getFiles();
 
@@ -24,15 +25,15 @@ export function addSettingsRoutes(app: Express) {
   });
 
   app.put('/settings/password', (req, res) => {
-    const encryptedOldPassword = req.body?.oldPassword;
+    const encryptedCurrentPassword = req.body?.currentPassword;
     const encryptedNewPassword = req.body?.newPassword;
-    const oldPassword = decryptRsa(encryptedOldPassword);
+    const currentPassword = decryptRsa(encryptedCurrentPassword);
     const newPassword = decryptRsa(encryptedNewPassword);
 
     const content = readFileSync(files.settingsFile.path, 'utf-8');
     const settings = JSON.parse(content);
 
-    const valid = bcrypt.compareSync(oldPassword, settings?.password);
+    const valid = bcrypt.compareSync(currentPassword, settings?.password);
 
     if (valid) {
       const hash = bcrypt.hashSync(newPassword, 12);
@@ -48,8 +49,7 @@ export function addSettingsRoutes(app: Express) {
     }
   });
 
-  // Public route
-  app.get('/key/public', (_, res) => {
+  app.get(publicRoutes.publicKey, (_, res) => {
     checkSettings();
     const content = readFileSync(files.settingsFile.path, 'utf-8');
     const settings = JSON.parse(content);

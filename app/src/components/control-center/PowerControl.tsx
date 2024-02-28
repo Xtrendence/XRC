@@ -28,7 +28,16 @@ export function PowerControl() {
         onConfirm={() => {
           if (selectedCommand) {
             axios
-              .post(`${apiUrl}/${selectedCommand}`)
+              .post(
+                `${apiUrl}/${selectedCommand}`,
+                {},
+                {
+                  headers: {
+                    Authorization:
+                      'Bearer ' + localStorage.getItem('loginToken'),
+                  },
+                }
+              )
               .then(() => {
                 toast.success(
                   `Performed "${selectedCommand}" command.`,

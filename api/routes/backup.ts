@@ -8,29 +8,9 @@ import { TBackupRoutine, TBackupRoutines } from '@types';
 import { validateNewBackupRoutine } from '../utils/validateNewBackupRoutine';
 import { formatPath } from '../utils/formatPath';
 import { performBackups } from '../utils/performBackups';
-import { folderSize } from '../utils/folderSize';
+import { getBackupSizes } from '../utils/getBackupSizes';
 
 const files = getFiles();
-
-async function getSizes(routines: TBackupRoutines) {
-  const sizes: Array<{
-    id: string;
-    size: number;
-  }> = [];
-
-  for (const routine of routines) {
-    const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
-
-    if (!existsSync(backupFolder)) {
-      continue;
-    }
-
-    const size = (await folderSize(backupFolder)) as number;
-    sizes.push({ id: routine.id, size: size || 0 });
-  }
-
-  return sizes;
-}
 
 export function addBackupRoutes(app: Express) {
   console.log(
@@ -49,7 +29,7 @@ export function addBackupRoutes(app: Express) {
       validJSON(content) ? JSON.parse(content) : []
     ) as Array<TBackupRoutine>;
 
-    const sizes = await getSizes(routines);
+    const sizes = await getBackupSizes(routines);
 
     res.send({ routines, sizes });
   });
@@ -115,7 +95,7 @@ export function addBackupRoutes(app: Express) {
 
     performBackups();
 
-    const sizes = await getSizes(routines);
+    const sizes = await getBackupSizes(routines);
 
     res.send({ routines, sizes });
   });
@@ -185,7 +165,7 @@ export function addBackupRoutes(app: Express) {
 
     performBackups();
 
-    const sizes = await getSizes(routines);
+    const sizes = await getBackupSizes(routines);
 
     res.send({ routines, sizes });
   });
@@ -207,7 +187,7 @@ export function addBackupRoutes(app: Express) {
 
     performBackups();
 
-    const sizes = await getSizes(routines);
+    const sizes = await getBackupSizes(routines);
 
     res.send({ routines, sizes });
   });
@@ -237,7 +217,7 @@ export function addBackupRoutes(app: Express) {
       rmSync(backupFolder, { recursive: true, force: true });
     }
 
-    const sizes = await getSizes(routines);
+    const sizes = await getBackupSizes(routines);
 
     res.send({ routines, sizes });
   });

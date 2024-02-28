@@ -11,6 +11,7 @@ import { FaBars, FaCog, FaMicrochip, FaRedo, FaToggleOn } from 'react-icons/fa';
 import { navigationHeight } from '../../globalVariables';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { Login } from '../login';
 
 export const tabs = [
   '/processes',
@@ -39,7 +40,7 @@ export function NavigationTabs({
         background: 'transparent',
         overflow: 'hidden',
         '.Mui-selected': {
-          background: theme.palette.background.body,
+          background: `${theme.palette.background.surface} !important`,
         },
       })}
       onChange={(_, tab) => {
@@ -90,6 +91,7 @@ export default function Navigation() {
 
   return (
     <>
+      <Login />
       <Stack
         spacing={2}
         maxHeight={navigationHeight}

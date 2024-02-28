@@ -36,7 +36,11 @@ export default function BackupUtility() {
 
   const getRoutines = () => {
     axios
-      .get(`${apiUrl}/backup`)
+      .get(`${apiUrl}/backup`, {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.getItem('loginToken'),
+        },
+      })
       .then((res) => {
         const data: TBackupRoutines = res.data.routines;
         setRoutines(data.sort((a, b) => a.name.localeCompare(b.name)));
@@ -55,7 +59,11 @@ export default function BackupUtility() {
     }
 
     axios
-      .post(`${apiUrl}/backup`, newRoutine)
+      .post(`${apiUrl}/backup`, newRoutine, {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.getItem('loginToken'),
+        },
+      })
       .then((res) => {
         const data: TBackupRoutines = res.data.routines;
         setNewRoutine(initialNewRoutine);
@@ -85,7 +93,11 @@ export default function BackupUtility() {
     }
 
     axios
-      .put(`${apiUrl}/backup/${changes.id}`, changes)
+      .put(`${apiUrl}/backup/${changes.id}`, changes, {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.getItem('loginToken'),
+        },
+      })
       .then((res) => {
         const data: TBackupRoutines = res.data.routines;
         setRoutines(data.sort((a, b) => a.name.localeCompare(b.name)));
@@ -130,7 +142,11 @@ export default function BackupUtility() {
 
   const fetchProcesses = async () => {
     axios
-      .get(`${apiUrl}/processes?checksum=${checksum}`)
+      .get(`${apiUrl}/processes?checksum=${checksum}`, {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.getItem('loginToken'),
+        },
+      })
       .then((response) => {
         const { data } = response;
 
@@ -165,6 +181,9 @@ export default function BackupUtility() {
           if (routineToDelete) {
             axios
               .delete(`${apiUrl}/backup/${routineToDelete.id}`, {
+                headers: {
+                  Authorization: 'Bearer ' + localStorage.getItem('loginToken'),
+                },
                 data: {
                   keepFiles,
                 },

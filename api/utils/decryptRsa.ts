@@ -8,6 +8,9 @@ export function decryptRsa(data: string) {
   const content = readFileSync(files.settingsFile.path, 'utf-8');
   const settings = JSON.parse(content);
   const privateKey = settings?.privateKey;
-  const decrypted = forge.pki.privateKeyFromPem(privateKey).decrypt(data);
+  const decodedData = forge.util.decode64(data);
+  const decrypted = forge.pki
+    .privateKeyFromPem(privateKey)
+    .decrypt(decodedData);
   return decrypted;
 }

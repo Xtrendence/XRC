@@ -27,7 +27,11 @@ export function VolumeControl() {
     if (loading) return;
 
     axios
-      .get(`${apiUrl}/volume`)
+      .get(`${apiUrl}/volume`, {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.getItem('loginToken'),
+        },
+      })
       .then((res) => {
         if (date && res.data.date < date) {
           return;
@@ -81,7 +85,15 @@ export function VolumeControl() {
     const value = debouncedVolume?.volume;
 
     axios
-      .put(`${apiUrl}/volume`, { volume: value })
+      .put(
+        `${apiUrl}/volume`,
+        { volume: value },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('loginToken'),
+          },
+        }
+      )
       .then((res) => {
         if (!res.data.volume) {
           getVolume();
