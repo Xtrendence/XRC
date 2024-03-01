@@ -244,7 +244,7 @@ export default function BackupUtility() {
         }
         danger
       />
-      <Stack gap={2}>
+      <Stack gap={2} width={'calc(100% - 16px)'}>
         <CreateBackupCard
           processOptions={processOptions}
           newRoutine={newRoutine}

@@ -86,6 +86,9 @@ export function SessionSection() {
               color="danger"
               endDecorator={<RiLogoutBoxFill size={18} />}
               onClick={() => setLogoutType('all')}
+              sx={{
+                whiteSpace: 'nowrap',
+              }}
             >
               Logout Everywhere
             </Button>
