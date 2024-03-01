@@ -125,7 +125,7 @@ export function BackupFilesModal({
   };
 
   const getFileIndentation = (layer: number) => {
-    if (layer === 1) return 5.6;
+    if (layer === 1) return 10;
     return 4;
   };
 
