@@ -22,7 +22,7 @@ export default function ConfirmationModal({
   onConfirm: () => void;
   danger?: boolean;
   title: string;
-  content: string;
+  content: string | React.ReactNode;
   actions?: React.ReactNode;
 }) {
   return (
@@ -32,10 +32,11 @@ export default function ConfirmationModal({
           <DialogTitle
             sx={{
               alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <IoWarning />
             {title}
+            <IoWarning />
           </DialogTitle>
           <Divider />
           {content && <DialogContent>{content}</DialogContent>}

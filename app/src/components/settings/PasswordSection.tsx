@@ -2,6 +2,7 @@ import { Button, Card, Stack, Typography } from '@mui/joy';
 import { useState } from 'react';
 import { FaShield } from 'react-icons/fa6';
 import { PasswordChangeModal } from './PasswordChangeModal';
+import { FaLock } from 'react-icons/fa';
 
 export function PasswordSection() {
   const [open, setOpen] = useState(false);
@@ -29,6 +30,7 @@ export function PasswordSection() {
             <Button
               variant="solid"
               color="primary"
+              endDecorator={<FaLock />}
               onClick={() => setOpen(true)}
             >
               Change Password

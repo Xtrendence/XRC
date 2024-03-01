@@ -1,14 +1,23 @@
 import type { Express } from 'express';
 import { getFiles } from '../utils/getFiles';
-import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'fs';
 import { validJSON } from '../utils/validJSON';
 import gradient from 'gradient-string';
+import directoryTree from 'directory-tree';
 import { v4 } from 'uuid';
-import { TBackupRoutine, TBackupRoutines } from '@types';
+import { TBackupFiles, TBackupRoutine, TBackupRoutines } from '@types';
 import { validateNewBackupRoutine } from '../utils/validateNewBackupRoutine';
 import { formatPath } from '../utils/formatPath';
 import { performBackups } from '../utils/performBackups';
 import { getBackupSizes } from '../utils/getBackupSizes';
+import { exec } from 'child_process';
 
 const files = getFiles();
 
@@ -32,6 +41,76 @@ export function addBackupRoutes(app: Express) {
     const sizes = await getBackupSizes(routines);
 
     res.send({ routines, sizes });
+  });
+
+  app.get('/backup/files', async (_, res) => {
+    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+    const routines = (
+      validJSON(content) ? JSON.parse(content) : []
+    ) as Array<TBackupRoutine>;
+
+    const sizes = await getBackupSizes(routines);
+
+    const backups =
+      routines.map((routine) => {
+        const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
+        const tree = directoryTree(backupFolder, {
+          attributes: ['size', 'type', 'extension'],
+        });
+        return { routine: routine, files: tree };
+      }) || ([] as TBackupFiles);
+
+    res.send({ backups, sizes });
+  });
+
+  app.get('/backup/open/:id/:path', async (req, res) => {
+    const { id, path } = req.params;
+
+    if (!['source', 'backup'].includes(path)) {
+      res
+        .status(400)
+        .send({ message: 'Invalid path. Must be "source" or "backup".' });
+      return;
+    }
+
+    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+
+    const routines = (
+      validJSON(content) ? JSON.parse(content) : []
+    ) as TBackupRoutines;
+
+    const routine = routines.find((r) => r.id === id);
+
+    if (!routine) {
+      res.status(404).send({ message: 'Backup routine not found.' });
+      return;
+    }
+
+    const formattedPath =
+      path === 'source' ? routine.path : `${files.backupsFolder.path}/${id}`;
+
+    const exists = existsSync(formattedPath);
+
+    if (!exists) {
+      res.status(400).send({ message: 'Path does not exist.' });
+      return;
+    }
+
+    const parentPath = formattedPath.split('/').slice(0, -1).join('/');
+
+    const open = exec(
+      `start "" "${
+        routine.type === 'file' && path === 'source'
+          ? parentPath
+          : formattedPath
+      }"`
+    );
+
+    open.on('message', () => {
+      open.kill();
+    });
+
+    res.status(200).send({ message: 'Opening folder.' });
   });
 
   app.post('/backup', async (req, res) => {
@@ -192,7 +271,14 @@ export function addBackupRoutes(app: Express) {
     res.send({ routines, sizes });
   });
 
-  app.delete('/backup/:id', async (req, res) => {
+  app.delete('/backup/all', (_, res) => {
+    writeFileSync(files.backupRoutinesFile.path, JSON.stringify([], null, 4));
+    rmSync(files.backupsFolder.path, { recursive: true, force: true });
+    mkdirSync(files.backupsFolder.path);
+    res.send({ routines: [], sizes: [] });
+  });
+
+  app.delete('/backup/routine/:id', async (req, res) => {
     const { id } = req.params;
     const { keepFiles } = req.body;
 
@@ -222,8 +308,26 @@ export function addBackupRoutes(app: Express) {
     res.send({ routines, sizes });
   });
 
-  app.delete('/backup/all', (_, res) => {
-    writeFileSync(files.backupRoutinesFile.path, JSON.stringify([], null, 4));
-    res.send({ routines: [], sizes: [] });
+  app.delete('/backup/files/:id', async (req, res) => {
+    const { id } = req.params;
+    const { date } = req.body;
+
+    const backupFolder = `${files.backupsFolder.path}/${id}/${date}`;
+
+    if (!existsSync(backupFolder)) {
+      res.status(400).send({ message: 'Backup folder does not exist.' });
+      return;
+    }
+
+    rmSync(backupFolder, { recursive: true, force: true });
+
+    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+    const routines = (
+      validJSON(content) ? JSON.parse(content) : []
+    ) as TBackupRoutines;
+
+    const sizes = await getBackupSizes(routines);
+
+    res.send({ routines, sizes });
   });
 }

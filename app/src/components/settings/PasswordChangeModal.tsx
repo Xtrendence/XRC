@@ -13,7 +13,7 @@ import {
 } from '@mui/joy';
 import { Dispatch, SetStateAction, useState } from 'react';
 import toast from 'react-hot-toast';
-import { FaEye, FaEyeSlash, FaKey } from 'react-icons/fa';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { FaShield } from 'react-icons/fa6';
 import { apiUrl, toastOptions } from '../../globalVariables';
 import axios from 'axios';
@@ -111,7 +111,15 @@ export function PasswordChangeModal({
   };
 
   return (
-    <Modal open={open} hideBackdrop={hideBackdrop}>
+    <Modal
+      open={open}
+      hideBackdrop={hideBackdrop}
+      onClose={() => {
+        if (!required) {
+          setOpen(false);
+        }
+      }}
+    >
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -122,10 +130,11 @@ export function PasswordChangeModal({
           <DialogTitle
             sx={{
               alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <FaShield />
             Change Password
+            <FaShield />
           </DialogTitle>
           <Divider />
           <DialogContent>

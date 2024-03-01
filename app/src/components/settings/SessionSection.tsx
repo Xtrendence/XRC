@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import ConfirmationModal from '../common/ConfirmationModal';
 import { useState } from 'react';
 import { FaUser } from 'react-icons/fa';
+import { RiLogoutBoxFill, RiLogoutBoxLine } from 'react-icons/ri';
 
 export function SessionSection() {
   const [logoutType, setLogoutType] = useState<'single' | 'all'>();
@@ -75,6 +76,7 @@ export function SessionSection() {
             <Button
               variant="solid"
               color="danger"
+              endDecorator={<RiLogoutBoxLine size={18} />}
               onClick={() => setLogoutType('single')}
             >
               Logout
@@ -82,6 +84,7 @@ export function SessionSection() {
             <Button
               variant="solid"
               color="danger"
+              endDecorator={<RiLogoutBoxFill size={18} />}
               onClick={() => setLogoutType('all')}
             >
               Logout Everywhere

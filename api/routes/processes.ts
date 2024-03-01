@@ -45,9 +45,14 @@ export function addProcessRoutes(app: Express) {
   });
 
   app.delete('/processes/:pid', async (req, res) => {
-    const pid = req.params.pid;
+    const pid = Number(req.params.pid);
 
-    if (!pid) {
+    if (
+      !pid ||
+      isNaN(pid) ||
+      typeof pid !== 'number' ||
+      pid.toString().length > 10
+    ) {
       res.status(400).send('Bad request');
       return;
     }

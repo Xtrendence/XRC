@@ -53,10 +53,11 @@ export default function DependenciesModal({
         <DialogTitle
           sx={{
             alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          <FaLink />
           Select Dependencies
+          <FaLink />
         </DialogTitle>
         <Divider />
         <DialogContent

@@ -17,6 +17,9 @@ import { TNewBackupRoutine } from '@types';
 import { BackupCardForm } from './BackupCardForm';
 import { FaHardDrive } from 'react-icons/fa6';
 import { formatFileSize } from '../../utils';
+import axios from 'axios';
+import { apiUrl, toastOptions } from '../../globalVariables';
+import toast from 'react-hot-toast';
 
 export function BackupCard({
   processOptions,
@@ -212,18 +215,43 @@ export function BackupCard({
                   title="Absolute path to the file or folder that should be backed up."
                 >
                   <Chip
+                    onClick={() => {
+                      axios
+                        .get(`${apiUrl}/backup/open/${routine.id}/source`, {
+                          headers: {
+                            Authorization:
+                              'Bearer ' + localStorage.getItem('loginToken'),
+                          },
+                        })
+                        .catch((error) => {
+                          console.log(error);
+
+                          toast.error(
+                            `Failed to open source folder.`,
+                            toastOptions
+                          );
+                        });
+                    }}
                     sx={(theme) => ({
+                      '.MuiChip-action': {
+                        opacity: 0,
+                      },
                       minHeight: '36px',
                       maxHeight: '36px',
                       paddingTop: 0.1,
                       borderWidth: 2,
                       display: 'flex',
                       flexDirection: 'row',
+                      border: `2px solid`,
                       borderColor: theme.palette.neutral[500],
                       maxWidth: {
                         xs: 'calc(100dvw - 32px - 64px)',
                         md: 470,
                         lg: 800,
+                      },
+                      cursor: 'pointer',
+                      '&:hover': {
+                        backgroundColor: theme.palette.neutral[500],
                       },
                     })}
                     size="lg"
@@ -306,17 +334,40 @@ export function BackupCard({
                   title="The total amount of storage space that this backup routine is using."
                 >
                   <Chip
+                    onClick={() => {
+                      axios
+                        .get(`${apiUrl}/backup/open/${routine.id}/backup`, {
+                          headers: {
+                            Authorization:
+                              'Bearer ' + localStorage.getItem('loginToken'),
+                          },
+                        })
+                        .catch((error) => {
+                          console.log(error);
+
+                          toast.error(
+                            `Failed to open backup folder.`,
+                            toastOptions
+                          );
+                        });
+                    }}
                     sx={{
+                      '.MuiChip-action': {
+                        opacity: 0,
+                      },
                       minHeight: '36px',
                       maxHeight: '36px',
                       paddingTop: 0.1,
-                      borderWidth: 2,
-                      borderColor: 'rgb(189, 126, 126)',
+                      border: '2px solid rgb(189, 126, 126) !important',
                       display: {
                         xs: 'none',
                         md: 'flex',
                       },
                       flexDirection: 'row',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        background: 'rgb(189, 126, 126) !important',
+                      },
                     }}
                     size="lg"
                     variant="outlined"

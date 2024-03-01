@@ -155,10 +155,11 @@ export function Login() {
             <DialogTitle
               sx={{
                 alignItems: 'center',
+                justifyContent: 'space-between',
               }}
             >
-              <FaUser />
               Login
+              <FaUser />
             </DialogTitle>
             <Divider />
             <DialogContent>

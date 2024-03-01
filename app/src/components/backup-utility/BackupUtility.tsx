@@ -180,7 +180,7 @@ export default function BackupUtility() {
         onConfirm={() => {
           if (routineToDelete) {
             axios
-              .delete(`${apiUrl}/backup/${routineToDelete.id}`, {
+              .delete(`${apiUrl}/backup/routine/${routineToDelete.id}`, {
                 headers: {
                   Authorization: 'Bearer ' + localStorage.getItem('loginToken'),
                 },
