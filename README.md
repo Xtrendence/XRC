@@ -66,7 +66,7 @@ Use the Releases section to download the latest stable build for both the server
 
 ### 8. Usage
 
-By default, port `3000` is used, but this can be changed by setting a `PORT` variable in the client's `.env` file (simply remove `.example` from `.env.example` and fill out the file). The default port for the API is `3040`, so ensure that is in the `.env` file as well like so:
+By default, port `3000` is used, but this can be changed (when using `yarn run dev` to serve the client) by setting a `PORT` variable in the client's `.env` file (simply remove `.example` from `.env.example` and fill out the file). If you're using `serve`, you can use `serve -l 3039` to specify the port. The default port for the API is `3040`, so ensure that is in the `.env` file as well like so:
 
 ```
 REACT_APP_API_PORT=3040
