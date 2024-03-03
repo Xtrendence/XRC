@@ -62,7 +62,7 @@ Since XRC is self-hosted and meant to be used by devices on the same network, I 
 
 ### 7. Installation
 
-Use the Releases section to download the latest stable build for both the server and the client. Use [PM2](https://pm2.keymetrics.io/) or [NSSM](https://nssm.cc/) to run the server as a service (use `ts-node` if you don't want to transpile from TypeScript to JavaScript).
+Use the Releases section to download the latest stable build for both the server and the client. Use [PM2](https://pm2.keymetrics.io/) or [NSSM](https://nssm.cc/) to run the server as a service (use `ts-node` if you don't want to transpile from TypeScript to JavaScript, `ts-node api/server.ts`). Use a package such as `serve` to serve the client build (`serve app/build`).
 
 ### 8. Usage
 
