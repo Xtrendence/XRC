@@ -1,3 +1,3 @@
 export function formatPath(path: string) {
-  return path.replace(/\\/g, '/').replace(/\/+/g, '/');
+  return path?.replace(/\\/g, '/')?.replace(/\/+/g, '/');
 }

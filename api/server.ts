@@ -15,7 +15,7 @@ dotenv.config({
   path: '.env',
 });
 
-const port = process.env.API_PORT || 3000;
+const port = process.env.API_PORT || 3040;
 
 const app = express();
 app.use(cors());

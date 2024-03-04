@@ -17,7 +17,7 @@ import { validateNewBackupRoutine } from '../utils/validateNewBackupRoutine';
 import { formatPath } from '../utils/formatPath';
 import { performBackups } from '../utils/performBackups';
 import { getBackupSizes } from '../utils/getBackupSizes';
-import { exec } from 'child_process';
+import { executeCommand } from '../utils/executeCommand';
 
 const files = getFiles();
 
@@ -33,301 +33,347 @@ export function addBackupRoutes(app: Express) {
   setInterval(performBackups, 1_000 * interval);
 
   app.get('/backup', async (_, res) => {
-    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
-    const routines = (
-      validJSON(content) ? JSON.parse(content) : []
-    ) as Array<TBackupRoutine>;
+    try {
+      const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+      const routines = (
+        validJSON(content) ? JSON.parse(content) : []
+      ) as Array<TBackupRoutine>;
 
-    const sizes = await getBackupSizes(routines);
+      const sizes = await getBackupSizes(routines);
 
-    res.send({ routines, sizes });
+      res.send({ routines, sizes });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal server error.' });
+    }
   });
 
   app.get('/backup/files', async (_, res) => {
-    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
-    const routines = (
-      validJSON(content) ? JSON.parse(content) : []
-    ) as Array<TBackupRoutine>;
+    try {
+      const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+      const routines = (
+        validJSON(content) ? JSON.parse(content) : []
+      ) as Array<TBackupRoutine>;
 
-    const sizes = await getBackupSizes(routines);
+      const sizes = await getBackupSizes(routines);
 
-    const backups =
-      routines.map((routine) => {
-        const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
-        const tree = directoryTree(backupFolder, {
-          attributes: ['size', 'type', 'extension'],
-        });
-        return { routine: routine, files: tree };
-      }) || ([] as TBackupFiles);
+      const backups =
+        routines.map((routine) => {
+          const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
+          const tree = directoryTree(backupFolder, {
+            attributes: ['size', 'type', 'extension'],
+          });
+          return { routine: routine, files: tree };
+        }) || ([] as TBackupFiles);
 
-    res.send({ backups, sizes });
+      res.send({ backups, sizes });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal server error.' });
+    }
   });
 
   app.get('/backup/open/:id/:path', async (req, res) => {
-    const { id, path } = req.params;
+    try {
+      const { id, path } = req.params;
 
-    if (!['source', 'backup'].includes(path)) {
-      res
-        .status(400)
-        .send({ message: 'Invalid path. Must be "source" or "backup".' });
-      return;
+      if (!['source', 'backup'].includes(path)) {
+        res
+          .status(400)
+          .send({ message: 'Invalid path. Must be "source" or "backup".' });
+        return;
+      }
+
+      const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+
+      const routines = (
+        validJSON(content) ? JSON.parse(content) : []
+      ) as TBackupRoutines;
+
+      const routine = routines.find((r) => r.id === id);
+
+      if (!routine) {
+        res.status(404).send({ message: 'Backup routine not found.' });
+        return;
+      }
+
+      const formattedPath =
+        path === 'source' ? routine.path : `${files.backupsFolder.path}/${id}`;
+
+      const exists = existsSync(formattedPath);
+
+      if (!exists) {
+        res.status(400).send({ message: 'Path does not exist.' });
+        return;
+      }
+
+      const parentPath = formattedPath.split('/').slice(0, -1).join('/');
+
+      executeCommand(
+        `start`,
+        [
+          `""`,
+          `"${
+            routine.type === 'file' && path === 'source'
+              ? parentPath
+              : formattedPath
+          }"`,
+        ],
+        true
+      );
+
+      res.status(200).send({ message: 'Opening folder.' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal server error.' });
     }
-
-    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
-
-    const routines = (
-      validJSON(content) ? JSON.parse(content) : []
-    ) as TBackupRoutines;
-
-    const routine = routines.find((r) => r.id === id);
-
-    if (!routine) {
-      res.status(404).send({ message: 'Backup routine not found.' });
-      return;
-    }
-
-    const formattedPath =
-      path === 'source' ? routine.path : `${files.backupsFolder.path}/${id}`;
-
-    const exists = existsSync(formattedPath);
-
-    if (!exists) {
-      res.status(400).send({ message: 'Path does not exist.' });
-      return;
-    }
-
-    const parentPath = formattedPath.split('/').slice(0, -1).join('/');
-
-    const open = exec(
-      `start "" "${
-        routine.type === 'file' && path === 'source'
-          ? parentPath
-          : formattedPath
-      }"`
-    );
-
-    open.on('message', () => {
-      open.kill();
-    });
-
-    res.status(200).send({ message: 'Opening folder.' });
   });
 
   app.post('/backup', async (req, res) => {
-    const { enabled, name, path, frequency, limit, dependencies } = req.body;
+    try {
+      const { enabled, name, path, frequency, limit, dependencies } = req.body;
 
-    const valid = validateNewBackupRoutine({
-      enabled,
-      name,
-      path,
-      frequency,
-      limit,
-    });
-
-    if (!valid) {
-      res.status(400).send({ message: 'Invalid backup routine.' });
-      return;
-    }
-
-    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
-    const routines = (
-      validJSON(content) ? JSON.parse(content) : []
-    ) as TBackupRoutines;
-
-    const id = v4();
-
-    const formattedPath = formatPath(path);
-
-    const exists = existsSync(formattedPath);
-
-    if (!exists) {
-      res.status(400).send({
-        message:
-          'Path does not exist. Make sure that file or directory exists before creating a backup routine for it.',
+      const valid = validateNewBackupRoutine({
+        enabled,
+        name,
+        path,
+        frequency,
+        limit,
       });
-      return;
+
+      if (!valid) {
+        res.status(400).send({ message: 'Invalid backup routine.' });
+        return;
+      }
+
+      const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+      const routines = (
+        validJSON(content) ? JSON.parse(content) : []
+      ) as TBackupRoutines;
+
+      const id = v4();
+
+      const formattedPath = formatPath(path);
+
+      const exists = existsSync(formattedPath);
+
+      if (!exists) {
+        res.status(400).send({
+          message:
+            'Path does not exist. Make sure that file or directory exists before creating a backup routine for it.',
+        });
+        return;
+      }
+
+      const isFile = !statSync(formattedPath).isDirectory();
+
+      const routinePath = isFile
+        ? formattedPath
+        : formattedPath.charAt(formattedPath.length - 1) === '/'
+        ? formattedPath
+        : `${formattedPath}/`;
+
+      routines.push({
+        id,
+        enabled,
+        name,
+        path: routinePath,
+        frequency,
+        limit,
+        type: isFile ? 'file' : 'folder',
+        dependencies: dependencies || [],
+      });
+
+      writeFileSync(
+        files.backupRoutinesFile.path,
+        JSON.stringify(routines, null, 4)
+      );
+
+      performBackups();
+
+      const sizes = await getBackupSizes(routines);
+
+      res.send({ routines, sizes });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal server error.' });
     }
-
-    const isFile = !statSync(formattedPath).isDirectory();
-
-    const routinePath = isFile
-      ? formattedPath
-      : formattedPath.charAt(formattedPath.length - 1) === '/'
-      ? formattedPath
-      : `${formattedPath}/`;
-
-    routines.push({
-      id,
-      enabled,
-      name,
-      path: routinePath,
-      frequency,
-      limit,
-      type: isFile ? 'file' : 'folder',
-      dependencies: dependencies || [],
-    });
-
-    writeFileSync(
-      files.backupRoutinesFile.path,
-      JSON.stringify(routines, null, 4)
-    );
-
-    performBackups();
-
-    const sizes = await getBackupSizes(routines);
-
-    res.send({ routines, sizes });
   });
 
   app.put('/backup/:id', async (req, res) => {
-    const { id } = req.params;
-    const { enabled, name, path, frequency, limit, dependencies } = req.body;
+    try {
+      const { id } = req.params;
+      const { enabled, name, path, frequency, limit, dependencies } = req.body;
 
-    const valid = validateNewBackupRoutine({
-      enabled,
-      name,
-      path,
-      frequency,
-      limit,
-    });
+      const valid = validateNewBackupRoutine({
+        enabled,
+        name,
+        path,
+        frequency,
+        limit,
+      });
 
-    if (!valid) {
-      res.status(400).send({ message: 'Invalid backup routines.' });
-      return;
+      if (!valid) {
+        res.status(400).send({ message: 'Invalid backup routines.' });
+        return;
+      }
+
+      const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+      const routines = (
+        validJSON(content) ? JSON.parse(content) : []
+      ) as TBackupRoutines;
+
+      const index = routines.findIndex((s) => s.id === id);
+
+      const formattedPath = formatPath(path);
+
+      const exists = existsSync(formattedPath);
+
+      if (!exists) {
+        res.status(400).send({ message: 'Path does not exist.' });
+        return;
+      }
+
+      const isFile = !statSync(formattedPath).isDirectory();
+
+      const routinePath = isFile
+        ? formattedPath
+        : formattedPath.charAt(formattedPath.length - 1) === '/'
+        ? formattedPath
+        : `${formattedPath}/`;
+
+      const routine = {
+        id,
+        enabled,
+        name,
+        path: routinePath,
+        frequency,
+        limit,
+        type: isFile ? 'file' : 'folder',
+        dependencies: dependencies || [],
+      } satisfies TBackupRoutine;
+
+      if (index > -1) {
+        routines[index] = routine;
+      } else {
+        routines.push(routine);
+      }
+
+      writeFileSync(
+        files.backupRoutinesFile.path,
+        JSON.stringify(routines, null, 4)
+      );
+
+      performBackups();
+
+      const sizes = await getBackupSizes(routines);
+
+      res.send({ routines, sizes });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal server error.' });
     }
-
-    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
-    const routines = (
-      validJSON(content) ? JSON.parse(content) : []
-    ) as TBackupRoutines;
-
-    const index = routines.findIndex((s) => s.id === id);
-
-    const formattedPath = formatPath(path);
-
-    const exists = existsSync(formattedPath);
-
-    if (!exists) {
-      res.status(400).send({ message: 'Path does not exist.' });
-      return;
-    }
-
-    const isFile = !statSync(formattedPath).isDirectory();
-
-    const routinePath = isFile
-      ? formattedPath
-      : formattedPath.charAt(formattedPath.length - 1) === '/'
-      ? formattedPath
-      : `${formattedPath}/`;
-
-    const routine = {
-      id,
-      enabled,
-      name,
-      path: routinePath,
-      frequency,
-      limit,
-      type: isFile ? 'file' : 'folder',
-      dependencies: dependencies || [],
-    } satisfies TBackupRoutine;
-
-    if (index > -1) {
-      routines[index] = routine;
-    } else {
-      routines.push(routine);
-    }
-
-    writeFileSync(
-      files.backupRoutinesFile.path,
-      JSON.stringify(routines, null, 4)
-    );
-
-    performBackups();
-
-    const sizes = await getBackupSizes(routines);
-
-    res.send({ routines, sizes });
   });
 
   app.put('/backup/all', async (req, res) => {
-    const { enabled } = req.body;
+    try {
+      const { enabled } = req.body;
 
-    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
-    const routines = (
-      validJSON(content) ? JSON.parse(content) : []
-    ) as TBackupRoutines;
+      const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+      const routines = (
+        validJSON(content) ? JSON.parse(content) : []
+      ) as TBackupRoutines;
 
-    routines.forEach((s) => (s.enabled = enabled));
+      routines.forEach((s) => (s.enabled = enabled));
 
-    writeFileSync(
-      files.backupRoutinesFile.path,
-      JSON.stringify(routines, null, 4)
-    );
+      writeFileSync(
+        files.backupRoutinesFile.path,
+        JSON.stringify(routines, null, 4)
+      );
 
-    performBackups();
+      performBackups();
 
-    const sizes = await getBackupSizes(routines);
+      const sizes = await getBackupSizes(routines);
 
-    res.send({ routines, sizes });
+      res.send({ routines, sizes });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal server error.' });
+    }
   });
 
   app.delete('/backup/all', (_, res) => {
-    writeFileSync(files.backupRoutinesFile.path, JSON.stringify([], null, 4));
-    rmSync(files.backupsFolder.path, { recursive: true, force: true });
-    mkdirSync(files.backupsFolder.path);
-    res.send({ routines: [], sizes: [] });
+    try {
+      writeFileSync(files.backupRoutinesFile.path, JSON.stringify([], null, 4));
+      rmSync(files.backupsFolder.path, { recursive: true, force: true });
+      mkdirSync(files.backupsFolder.path);
+      res.send({ routines: [], sizes: [] });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal server error.' });
+    }
   });
 
   app.delete('/backup/routine/:id', async (req, res) => {
-    const { id } = req.params;
-    const { keepFiles } = req.body;
+    try {
+      const { id } = req.params;
+      const { keepFiles } = req.body;
 
-    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
-    const routines = (
-      validJSON(content) ? JSON.parse(content) : []
-    ) as TBackupRoutines;
+      const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+      const routines = (
+        validJSON(content) ? JSON.parse(content) : []
+      ) as TBackupRoutines;
 
-    const index = routines.findIndex((s) => s.id === id);
+      const index = routines.findIndex((s) => s.id === id);
 
-    if (index > -1) {
-      routines.splice(index, 1);
+      if (index > -1) {
+        routines.splice(index, 1);
+      }
+
+      writeFileSync(
+        files.backupRoutinesFile.path,
+        JSON.stringify(routines, null, 4)
+      );
+
+      if (keepFiles === false) {
+        const backupFolder = `${files.backupsFolder.path}/${id}`;
+        rmSync(backupFolder, { recursive: true, force: true });
+      }
+
+      const sizes = await getBackupSizes(routines);
+
+      res.send({ routines, sizes });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal server error.' });
     }
-
-    writeFileSync(
-      files.backupRoutinesFile.path,
-      JSON.stringify(routines, null, 4)
-    );
-
-    if (keepFiles === false) {
-      const backupFolder = `${files.backupsFolder.path}/${id}`;
-      rmSync(backupFolder, { recursive: true, force: true });
-    }
-
-    const sizes = await getBackupSizes(routines);
-
-    res.send({ routines, sizes });
   });
 
   app.delete('/backup/files/:id', async (req, res) => {
-    const { id } = req.params;
-    const { date } = req.body;
+    try {
+      const { id } = req.params;
+      const { date } = req.body;
 
-    const backupFolder = `${files.backupsFolder.path}/${id}/${date}`;
+      const backupFolder = `${files.backupsFolder.path}/${id}/${date}`;
 
-    if (!existsSync(backupFolder)) {
-      res.status(400).send({ message: 'Backup folder does not exist.' });
-      return;
+      if (!existsSync(backupFolder)) {
+        res.status(400).send({ message: 'Backup folder does not exist.' });
+        return;
+      }
+
+      rmSync(backupFolder, { recursive: true, force: true });
+
+      const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+      const routines = (
+        validJSON(content) ? JSON.parse(content) : []
+      ) as TBackupRoutines;
+
+      const sizes = await getBackupSizes(routines);
+
+      res.send({ routines, sizes });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal server error.' });
     }
-
-    rmSync(backupFolder, { recursive: true, force: true });
-
-    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
-    const routines = (
-      validJSON(content) ? JSON.parse(content) : []
-    ) as TBackupRoutines;
-
-    const sizes = await getBackupSizes(routines);
-
-    res.send({ routines, sizes });
   });
 }

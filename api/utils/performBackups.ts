@@ -36,7 +36,7 @@ function getBackups(routine: TBackupRoutine) {
       return v.name;
     });
 
-  return backups;
+  return backups || [];
 }
 
 function checkLimit(routine: TBackupRoutine) {
@@ -98,76 +98,80 @@ async function hasChanges(
 export function performBackups() {
   const files = getFiles();
   const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
-  const routines: TBackupRoutines = JSON.parse(content);
+  const routines: TBackupRoutines = JSON.parse(content) || [];
 
   routines
     .filter((routine) => routine.enabled === true)
     .forEach(async (routine) => {
-      const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
+      try {
+        const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
 
-      const latestBackup = getBackups(routine).pop();
+        const latestBackup = getBackups(routine).pop();
 
-      if (existsSync(backupFolder) && latestBackup) {
-        const checkChanges = await hasChanges(
-          backupFolder,
-          latestBackup,
-          routine
-        );
+        if (existsSync(backupFolder) && latestBackup) {
+          const checkChanges = await hasChanges(
+            backupFolder,
+            latestBackup,
+            routine
+          );
 
-        if (!checkChanges) {
+          if (!checkChanges) {
+            return;
+          }
+        }
+
+        const hasDependencies =
+          routine?.dependencies && routine?.dependencies?.length > 0;
+
+        if (hasDependencies) {
+          const processes = (await getProcesses()) as Array<TProcess>;
+          const dependencies = routine.dependencies as Array<string>;
+
+          const isRunning = dependencies.every((dependency) => {
+            return processes.some((process) => process.name === dependency);
+          });
+
+          if (!isRunning) {
+            return;
+          }
+        }
+
+        const date = new Date();
+
+        const requiresBackup =
+          process.env.DEV_MODE === 'true' ||
+          !latestBackup ||
+          date.getTime() - Number(latestBackup.split('-')[0]) >
+            routine.frequency * 60 * 1000;
+
+        if (!requiresBackup) {
           return;
         }
-      }
 
-      const hasDependencies =
-        routine?.dependencies && routine?.dependencies?.length > 0;
+        const backupFiles = `${backupFolder}/${date.getTime()}-${date
+          .toISOString()
+          .replace(/T/, ' ')
+          .replace(/\..+/, '')
+          .replace(/:/g, '-')}/`;
 
-      if (hasDependencies) {
-        const processes = (await getProcesses()) as Array<TProcess>;
-        const dependencies = routine.dependencies as Array<string>;
-
-        const isRunning = dependencies.every((dependency) => {
-          return processes.some((process) => process.name === dependency);
-        });
-
-        if (!isRunning) {
-          return;
+        if (!existsSync(backupFolder)) {
+          mkdirSync(backupFolder);
         }
+
+        if (!existsSync(backupFiles)) {
+          mkdirSync(backupFiles);
+        }
+
+        if (routine.type === 'folder') {
+          cpSync(routine.path, backupFiles, { recursive: true });
+        } else {
+          const filename = routine.path.split('/').pop();
+          copyFileSync(routine.path, backupFiles + filename);
+        }
+
+        checkLimit(routine);
+      } catch (error) {
+        console.error(error);
       }
-
-      const date = new Date();
-
-      const requiresBackup =
-        process.env.DEV_MODE === 'true' ||
-        !latestBackup ||
-        date.getTime() - Number(latestBackup.split('-')[0]) >
-          routine.frequency * 60 * 1000;
-
-      if (!requiresBackup) {
-        return;
-      }
-
-      const backupFiles = `${backupFolder}/${date.getTime()}-${date
-        .toISOString()
-        .replace(/T/, ' ')
-        .replace(/\..+/, '')
-        .replace(/:/g, '-')}/`;
-
-      if (!existsSync(backupFolder)) {
-        mkdirSync(backupFolder);
-      }
-
-      if (!existsSync(backupFiles)) {
-        mkdirSync(backupFiles);
-      }
-
-      if (routine.type === 'folder') {
-        cpSync(routine.path, backupFiles, { recursive: true });
-      } else {
-        const filename = routine.path.split('/').pop();
-        copyFileSync(routine.path, backupFiles + filename);
-      }
-
-      checkLimit(routine);
     });
 }

@@ -1,7 +1,7 @@
 import type { Express } from 'express';
 import { getBinaries } from '../utils/getFiles';
-import { exec } from 'child_process';
 import gradient from 'gradient-string';
+import { executeCommand } from '../utils/executeCommand';
 
 export function addVolumeRoutes(app: Express) {
   console.log(gradient('darkBlue', 'blue')('    [✓] Adding volume routes.'));
@@ -10,14 +10,16 @@ export function addVolumeRoutes(app: Express) {
 
   const binaries = getBinaries();
 
-  app.get('/volume', function (_, res) {
+  app.get('/volume', async function (_, res) {
     try {
-      exec(`${binaries.setvol.path} report`, (_, stdout) => {
-        const parts = stdout.split(' = ');
-        const volume = Number(parts[1].split('\r')[0]);
+      const data = (await executeCommand(`${binaries.setvol.path}`, [
+        'report',
+      ])) as string;
 
-        res.send({ volume, date: new Date() });
-      });
+      const parts = data?.split(' = ');
+      const volume = Number(parts[1]?.split('\r')[0]);
+
+      res.send({ volume, date: new Date() });
     } catch (e) {
       console.log(e);
     }
@@ -40,7 +42,7 @@ export function addVolumeRoutes(app: Express) {
         res.send({ volume });
 
         recentAudioChange = new Date().getTime();
-        exec(`${binaries.setvol.path} ${volume}`);
+        executeCommand(`${binaries.setvol.path}`, [`${volume}`]);
       }
     } catch (e) {
       console.log(e);

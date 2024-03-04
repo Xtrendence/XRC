@@ -8,6 +8,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
+    "outDir": "./build",
     "paths": {
       "@types": ["../@types"]
     }

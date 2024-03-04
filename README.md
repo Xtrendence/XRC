@@ -66,6 +66,16 @@ Use the Releases section to download the latest stable build for both the server
 
 ### 8. Usage
 
+After extracting XRC.X.X.X.zip (ensure the `@types` folder is next to `api` and `app`), with PM2:
+
+```
+npm i -g pm2
+pm2 serve .\app\build\ 3039 --name "xrc-app" --spa -s
+pm2 start .\api\build\api\server.js --name "xrc-api" -s
+start http://localhost:3039
+
+```
+
 By default, port `3000` is used, but this can be changed (when using `yarn run dev` to serve the client) by setting a `PORT` variable in the client's `.env` file (simply remove `.example` from `.env.example` and fill out the file). If you're using `serve`, you can use `serve -l 3039` to specify the port. The default port for the API is `3040`, so ensure that is in the `.env` file as well like so:
 
 ```

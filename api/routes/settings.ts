@@ -12,48 +12,71 @@ export function addSettingsRoutes(app: Express) {
   console.log(gradient('gray', 'white')('    [✓] Adding settings routes.'));
 
   app.get('/settings', (_, res) => {
-    checkSettings();
-    const content = readFileSync(files.settingsFile.path, 'utf-8');
-    const settings = JSON.parse(content);
+    try {
+      checkSettings();
+      const content = readFileSync(files.settingsFile.path, 'utf-8');
+      const settings = JSON.parse(content);
 
-    if (settings.passwordChangeRequired === true) {
-      res.send({ passwordChangeRequired: true });
-      return;
+      if (settings.passwordChangeRequired === true) {
+        res.send({ passwordChangeRequired: true });
+        return;
+      }
+
+      res.send({ settings });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal server error.' });
     }
-
-    res.send({ settings });
   });
 
   app.put('/settings/password', (req, res) => {
-    const encryptedCurrentPassword = req.body?.currentPassword;
-    const encryptedNewPassword = req.body?.newPassword;
-    const currentPassword = decryptRsa(encryptedCurrentPassword);
-    const newPassword = decryptRsa(encryptedNewPassword);
+    try {
+      const encryptedCurrentPassword = req.body?.currentPassword;
+      const encryptedNewPassword = req.body?.newPassword;
+      const currentPassword = decryptRsa(encryptedCurrentPassword);
+      const newPassword = decryptRsa(encryptedNewPassword);
 
-    const content = readFileSync(files.settingsFile.path, 'utf-8');
-    const settings = JSON.parse(content);
+      const content = readFileSync(files.settingsFile.path, 'utf-8');
+      const settings = JSON.parse(content);
 
-    const valid = bcrypt.compareSync(currentPassword, settings?.password);
+      if (!currentPassword || !newPassword) {
+        res.status(400).send({ message: 'Invalid password.' });
+        return;
+      }
 
-    if (valid) {
-      const hash = bcrypt.hashSync(newPassword, 12);
+      const valid = bcrypt.compareSync(currentPassword, settings?.password);
 
-      settings.password = hash;
-      settings.passwordChangeRequired = false;
+      if (valid) {
+        const hash = bcrypt.hashSync(newPassword, 12);
 
-      writeFileSync(files.settingsFile.path, JSON.stringify(settings, null, 4));
+        settings.password = hash;
+        settings.passwordChangeRequired = false;
 
-      res.status(200).send({ message: 'Password changed.' });
-    } else {
-      res.status(401).send({ message: 'Invalid password.' });
+        writeFileSync(
+          files.settingsFile.path,
+          JSON.stringify(settings, null, 4)
+        );
+
+        res.status(200).send({ message: 'Password changed.' });
+      } else {
+        res.status(401).send({ message: 'Invalid password.' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal server error.' });
     }
   });
 
   app.get(publicRoutes.publicKey, (_, res) => {
-    checkSettings();
-    const content = readFileSync(files.settingsFile.path, 'utf-8');
-    const settings = JSON.parse(content);
-    const publicKey = settings?.publicKey;
-    res.send(publicKey);
+    try {
+      checkSettings();
+      const content = readFileSync(files.settingsFile.path, 'utf-8');
+      const settings = JSON.parse(content);
+      const publicKey = settings?.publicKey;
+      res.send(publicKey);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal server error.' });
+    }
   });
 }
