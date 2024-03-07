@@ -66,12 +66,17 @@ Use the Releases section to download the latest stable build for both the server
 
 ### 8. Usage
 
-After extracting XRC.X.X.X.zip (ensure the `@types` folder is next to `api` and `app`), with PM2:
+After extracting XRC.X.X.X.zip (ensure the `@types` folder is next to `api` and `app`), with PM2 (use PM2 Windows Startup if you want XRC to start with Windows):
 
 ```
 npm i -g pm2
+npm i -g pm2-windows-startup
+
+pm2-startup install
+
 pm2 serve .\app\build\ 3039 --name "xrc-app" --spa -s
 pm2 start .\api\build\api\server.js --name "xrc-api" -s
+
 start http://localhost:3039
 
 ```
