@@ -1,18 +1,21 @@
-import fastFolderSize from 'fast-folder-size';
+import { statSync, readdirSync } from 'fs';
 
-export function folderSize(path: string) {
-  return new Promise((resolve, reject) => {
+export function folderSize(folder: string) {
     try {
-      fastFolderSize(path, (error, bytes) => {
-        if (error) {
-          throw error;
+        const stats = statSync(folder);
+        if (stats.isFile()) {
+            return stats.size;
         }
 
-        resolve(bytes || 0);
-      });
+        let size = 0;
+        const files = readdirSync(folder);
+
+        for (const file of files) {
+            size += folderSize(`${folder}/${file}`) || 0;
+        }
+
+        return size;
     } catch (error) {
-      console.error(error);
-      reject(error);
+        console.error(error);
     }
-  });
 }
