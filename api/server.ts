@@ -10,9 +10,10 @@ import { addBackupRoutes } from './routes/backup';
 import { addSettingsRoutes } from './routes/settings';
 import { addSessionsRoutes } from './routes/sessions';
 import { addAuthMiddleware } from './middleware/auth';
+import { startup } from './utils/startup';
 
 dotenv.config({
-  path: '.env',
+    path: '.env',
 });
 
 const port = process.env.API_PORT || 3040;
@@ -22,10 +23,11 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/', (_, res) => {
-  res.status(200).send({ status: 'OK' });
+    res.status(200).send({ status: 'OK' });
 });
 
 checkSettings();
+startup();
 
 addAuthMiddleware(app);
 
@@ -39,14 +41,14 @@ addSessionsRoutes(app);
 addSettingsRoutes(app);
 
 console.log(
-  gradient('orange', 'yellow')('\n[✓] All routes added. Starting server...')
+    gradient('orange', 'yellow')('\n[✓] All routes added. Starting server...')
 );
 
 app.listen(port, () => {
-  console.log(
-    gradient(
-      'pink',
-      'khaki'
-    )(`\n--> Server is running at http://localhost:${port}`)
-  );
+    console.log(
+        gradient(
+            'pink',
+            'khaki'
+        )(`\n--> Server is running at http://localhost:${port}`)
+    );
 });

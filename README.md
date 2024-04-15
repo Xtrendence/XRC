@@ -26,11 +26,11 @@ A Node.js remote controller for machines running Windows with a variety of incre
 
 The process manager acts as a remote task manager for your PC. It serves 3 main purposes:
 
-- You might have a game open or something you can't Alt + Tab away from, and a process running that's interfering with the current program. With XRC, you can just use your phone to find and kill the process without losing focus from the current window, and without any interruptions.
+-   You might have a game open or something you can't Alt + Tab away from, and a process running that's interfering with the current program. With XRC, you can just use your phone to find and kill the process without losing focus from the current window, and without any interruptions.
 
-- A process might have frozen the entire system, and your mouse and keyboard may not even be working to get to task manager. XRC will still work, and you can use it to kill the non-responding process without being forced to restart and possibly lose progress in another application.
+-   A process might have frozen the entire system, and your mouse and keyboard may not even be working to get to task manager. XRC will still work, and you can use it to kill the non-responding process without being forced to restart and possibly lose progress in another application.
 
-- You might just be lazy and have an application open with a bright UI that's flashbanging your eyes at 1 AM while you're in bed and the PC monitor is on. Do you physically get up and close the app? Do you go through the hassle of using TeamViewer and navigating that with your phone? Maybe you don't even trust remote control software that uses external servers. Just use XRC's interface, which is designed with mobile devices in mind and isn't awkward to navigate on a small screen, and doesn't have delays or bandwidth requirements.
+-   You might just be lazy and have an application open with a bright UI that's flashbanging your eyes at 1 AM while you're in bed and the PC monitor is on. Do you physically get up and close the app? Do you go through the hassle of using TeamViewer and navigating that with your phone? Maybe you don't even trust remote control software that uses external servers. Just use XRC's interface, which is designed with mobile devices in mind and isn't awkward to navigate on a small screen, and doesn't have delays or bandwidth requirements.
 
 ### 2. Control Center
 
@@ -119,3 +119,7 @@ If you like my work and would like to support me, you can donate to the followin
 <img title="Monero" src="./assets/qr/XMR.png" width="256px" height="256px"/>
 
 </center>
+
+### Building Instructions
+
+Clone the repository, `yarn install` in both the `api` and `app` folder, use `yarn run tsc` to build the API, and `yarn run build` to build the app.

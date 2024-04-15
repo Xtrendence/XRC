@@ -8,127 +8,140 @@ import forge from 'node-forge';
 const apiFolder = path.join(__dirname, '../');
 
 export function getFiles() {
-  const logsFolder = apiFolder + '/logs';
-  const dataFolder = apiFolder + '/data';
-  const settingsFolder = dataFolder + '/settings';
-  const settingsFile = settingsFolder + '/settings.cfg';
-  const backupsFolder = dataFolder + '/backups';
-  const backupRoutinesFile = settingsFolder + '/backup.cfg';
-  const sessionsFile = dataFolder + '/sessions.db';
+    const logsFolder = apiFolder + '/logs';
+    const dataFolder = apiFolder + '/data';
+    const settingsFolder = dataFolder + '/settings';
+    const settingsFile = settingsFolder + '/settings.cfg';
+    const backupsFolder = dataFolder + '/backups';
+    const backupRoutinesFile = settingsFolder + '/backup.cfg';
+    const sessionsFile = dataFolder + '/sessions.db';
 
-  const files = {
-    apiFolder: {
-      type: 'folder',
-      path: apiFolder,
-    },
-    logsFolder: {
-      type: 'folder',
-      path: logsFolder,
-    },
-    dataFolder: {
-      type: 'folder',
-      path: dataFolder,
-    },
-    settingsFolder: {
-      type: 'folder',
-      path: settingsFolder,
-    },
-    settingsFile: {
-      type: 'file',
-      path: settingsFile,
-      defaultContent: JSON.stringify({
-        password: undefined,
-        passwordChangeRequired: true,
-      }),
-    },
-    backupsFolder: {
-      type: 'folder',
-      path: backupsFolder,
-    },
-    backupRoutinesFile: {
-      type: 'file',
-      path: backupRoutinesFile,
-      defaultContent: JSON.stringify([]),
-    },
-    sessionsFile: {
-      type: 'file',
-      path: sessionsFile,
-      defaultContent: JSON.stringify([]),
-    },
-  } satisfies TFiles;
+    const files = {
+        apiFolder: {
+            type: 'folder',
+            path: apiFolder,
+        },
+        logsFolder: {
+            type: 'folder',
+            path: logsFolder,
+        },
+        dataFolder: {
+            type: 'folder',
+            path: dataFolder,
+        },
+        settingsFolder: {
+            type: 'folder',
+            path: settingsFolder,
+        },
+        settingsFile: {
+            type: 'file',
+            path: settingsFile,
+            defaultContent: JSON.stringify({
+                password: undefined,
+                passwordChangeRequired: true,
+            }),
+        },
+        backupsFolder: {
+            type: 'folder',
+            path: backupsFolder,
+        },
+        backupRoutinesFile: {
+            type: 'file',
+            path: backupRoutinesFile,
+            defaultContent: JSON.stringify([]),
+        },
+        sessionsFile: {
+            type: 'file',
+            path: sessionsFile,
+            defaultContent: JSON.stringify([]),
+        },
+    } satisfies TFiles;
 
-  Object.values(files).forEach((file) => {
-    if (!existsSync(file.path)) {
-      if (file.type === 'folder') {
-        mkdirSync(file.path);
-      } else {
-        writeFileSync(file.path, file?.defaultContent || '');
-      }
-    }
-  });
+    Object.values(files).forEach((file) => {
+        if (!existsSync(file.path)) {
+            if (file.type === 'folder') {
+                mkdirSync(file.path);
+            } else {
+                writeFileSync(file.path, file?.defaultContent || '');
+            }
+        }
+    });
 
-  return files;
+    return files;
 }
 
 export function checkSettings() {
-  const files = getFiles();
+    const files = getFiles();
 
-  const settingsFile = files.settingsFile.path;
+    const settingsFile = files.settingsFile.path;
 
-  const content = readFileSync(settingsFile, 'utf-8');
+    const content = readFileSync(settingsFile, 'utf-8');
 
-  const settings = validJSON(content) ? JSON.parse(content) : {};
+    const settings = validJSON(content) ? JSON.parse(content) : {};
 
-  if (settings?.password === undefined) {
-    settings.password = bcrypt.hashSync('admin', 12);
-    settings.passwordChangeRequired = true;
-  }
+    if (settings?.updateTime === undefined) {
+        settings.updateTime = true;
+    }
 
-  if (settings?.publicKey === undefined || settings?.privateKey === undefined) {
-    const keys = forge.pki.rsa.generateKeyPair({ bits: 2048 });
-    settings.publicKey = forge.pki.publicKeyToRSAPublicKeyPem(keys.publicKey);
-    settings.privateKey = forge.pki.privateKeyToPem(keys.privateKey);
-  }
+    if (settings?.password === undefined) {
+        settings.password = bcrypt.hashSync('admin', 12);
+        settings.passwordChangeRequired = true;
+    }
 
-  if (
-    settings?.decryptionKey === undefined ||
-    settings?.decryptionIv === undefined
-  ) {
-    const decryptionKey = forge.util.bytesToHex(forge.random.getBytesSync(16));
-    const decryptionIv = forge.util.bytesToHex(forge.random.getBytesSync(16));
+    if (
+        settings?.publicKey === undefined ||
+        settings?.privateKey === undefined
+    ) {
+        const keys = forge.pki.rsa.generateKeyPair({ bits: 2048 });
+        settings.publicKey = forge.pki.publicKeyToRSAPublicKeyPem(
+            keys.publicKey
+        );
+        settings.privateKey = forge.pki.privateKeyToPem(keys.privateKey);
+    }
 
-    settings.decryptionKey = decryptionKey;
-    settings.decryptionIv = decryptionIv;
-  }
+    if (
+        settings?.decryptionKey === undefined ||
+        settings?.decryptionIv === undefined
+    ) {
+        const decryptionKey = forge.util.bytesToHex(
+            forge.random.getBytesSync(16)
+        );
+        const decryptionIv = forge.util.bytesToHex(
+            forge.random.getBytesSync(16)
+        );
 
-  writeFileSync(settingsFile, JSON.stringify(settings, null, 4));
+        settings.decryptionKey = decryptionKey;
+        settings.decryptionIv = decryptionIv;
+    }
+
+    writeFileSync(settingsFile, JSON.stringify(settings, null, 4));
 }
 
 export function getBinaries() {
-  const binariesFolder = apiFolder + 'bin';
+    const binariesFolder = apiFolder + 'bin';
 
-  const files = {
-    binariesFolder: {
-      type: 'folder',
-      path: binariesFolder,
-    },
-    cmdow: {
-      type: 'file',
-      path: binariesFolder + '\\cmdow.exe',
-    },
-    cmdtime3: {
-      type: 'file',
-      path: binariesFolder + '\\cmdtime3.exe',
-    },
-    setvol: {
-      type: 'file',
-      path: binariesFolder + '\\SetVol.exe',
-    },
-    time: {
-      type: 'file',
-      path: binariesFolder + '\\Time-Executable.exe',
-    },
-  } satisfies TFiles;
+    const files = {
+        binariesFolder: {
+            type: 'folder',
+            path: binariesFolder,
+        },
+        cmdow: {
+            type: 'file',
+            path: binariesFolder + '\\cmdow.exe',
+        },
+        cmdtime3: {
+            type: 'file',
+            path: binariesFolder + '\\cmdtime3.exe',
+        },
+        setvol: {
+            type: 'file',
+            path: binariesFolder + '\\SetVol.exe',
+        },
+        time: {
+            type: 'file',
+            path: binariesFolder + '\\Time-Executable.exe',
+        },
+    } satisfies TFiles;
 
-  return files;
+    return files;
 }
