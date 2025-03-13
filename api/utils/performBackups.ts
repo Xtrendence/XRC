@@ -1,177 +1,203 @@
 import {
-  copyFileSync,
-  cpSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
+    copyFileSync,
+    cpSync,
+    existsSync,
+    mkdirSync,
+    readFileSync,
+    readdirSync,
+    rmSync,
 } from 'fs';
 import { getFiles } from './getFiles';
 import { TBackupRoutine, TBackupRoutines } from '../../@types/TBackupRoutine';
 import { getProcesses } from './getProcesses';
 import { TProcess } from '../../@types/TProcess';
 import { hashElement } from 'folder-hash';
+import { execSync } from 'child_process';
 
 const files = getFiles();
 
 function getBackups(routine: TBackupRoutine) {
-  const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
+    const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
 
-  if (!existsSync(backupFolder)) {
-    return [];
-  }
+    if (!existsSync(backupFolder)) {
+        return [];
+    }
 
-  const backups = readdirSync(backupFolder)
-    .map(function (filename) {
-      return {
-        name: filename,
-        time: Number(filename.split('-')[0]),
-      };
-    })
-    .sort(function (a, b) {
-      return a.time - b.time;
-    })
-    .map(function (v) {
-      return v.name;
-    });
+    const backups = readdirSync(backupFolder)
+        .map(function (filename) {
+            return {
+                name: filename,
+                time: Number(filename.split('-')[0]),
+            };
+        })
+        .sort(function (a, b) {
+            return a.time - b.time;
+        })
+        .map(function (v) {
+            return v.name;
+        });
 
-  return backups || [];
+    return backups || [];
 }
 
-function checkLimit(routine: TBackupRoutine) {
-  const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
+export function checkLimit(routine: TBackupRoutine) {
+    const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
 
-  const backups = getBackups(routine);
+    const backups = getBackups(routine);
 
-  if (backups.length > routine.limit) {
-    const file = `${backupFolder}/${backups[0]}`;
-    rmSync(file, { recursive: true, force: true });
-  }
+    if (backups.length > routine.limit) {
+        const file = `${backupFolder}/${backups[0]}`;
+        rmSync(file, { recursive: true, force: true });
+
+        // If file still exists, use execSync (Windows).
+        if (existsSync(file)) {
+            execSync(`rmdir /s /q ${file}`);
+        }
+    }
+}
+
+export function checkLimitForAllRoutines() {
+    const files = getFiles();
+    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+    const routines: TBackupRoutines = JSON.parse(content) || [];
+
+    routines
+        .filter((routine) => routine.enabled === true)
+        .forEach(async (routine) => {
+            try {
+                checkLimit(routine);
+            } catch (error) {
+                console.error(error);
+            }
+        });
 }
 
 async function hasChanges(
-  backupFolder: string,
-  latestBackup: string,
-  routine: TBackupRoutine
+    backupFolder: string,
+    latestBackup: string,
+    routine: TBackupRoutine
 ) {
-  try {
-    const latestBackupFolder = `${backupFolder}/${latestBackup}`;
+    try {
+        const latestBackupFolder = `${backupFolder}/${latestBackup}`;
 
-    const latestBackupContent =
-      routine.type === 'file'
-        ? `${latestBackupFolder}/${readdirSync(latestBackupFolder, 'utf-8')[0]}`
-        : latestBackupFolder;
+        const latestBackupContent =
+            routine.type === 'file'
+                ? `${latestBackupFolder}/${
+                      readdirSync(latestBackupFolder, 'utf-8')[0]
+                  }`
+                : latestBackupFolder;
 
-    const latestBackupHash = await hashElement(latestBackupContent, {
-      encoding: 'hex',
-    });
+        const latestBackupHash = await hashElement(latestBackupContent, {
+            encoding: 'hex',
+        });
 
-    const currentHash = await hashElement(routine.path, {
-      encoding: 'hex',
-    });
+        const currentHash = await hashElement(routine.path, {
+            encoding: 'hex',
+        });
 
-    if (routine.type === 'file') {
-      if (latestBackupHash.hash === currentHash.hash) {
-        return false;
-      }
-    } else {
-      const latestBackupHashes = latestBackupHash.children
-        .map((child) => child.hash)
-        .sort();
-      const currentHashes = currentHash.children
-        .map((child) => child.hash)
-        .sort();
+        if (routine.type === 'file') {
+            if (latestBackupHash.hash === currentHash.hash) {
+                return false;
+            }
+        } else {
+            const latestBackupHashes = latestBackupHash.children
+                .map((child) => child.hash)
+                .sort();
+            const currentHashes = currentHash.children
+                .map((child) => child.hash)
+                .sort();
 
-      if (latestBackupHashes.join() === currentHashes.join()) {
-        return false;
-      }
+            if (latestBackupHashes.join() === currentHashes.join()) {
+                return false;
+            }
+        }
+
+        return true;
+    } catch (error) {
+        console.log(error);
+        return true;
     }
-
-    return true;
-  } catch (error) {
-    console.log(error);
-    return true;
-  }
 }
 
 export function performBackups() {
-  const files = getFiles();
-  const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
-  const routines: TBackupRoutines = JSON.parse(content) || [];
+    const files = getFiles();
+    const content = readFileSync(files.backupRoutinesFile.path, 'utf-8');
+    const routines: TBackupRoutines = JSON.parse(content) || [];
 
-  routines
-    .filter((routine) => routine.enabled === true)
-    .forEach(async (routine) => {
-      try {
-        const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
+    routines
+        .filter((routine) => routine.enabled === true)
+        .forEach(async (routine) => {
+            try {
+                const backupFolder = `${files.backupsFolder.path}/${routine.id}`;
 
-        const latestBackup = getBackups(routine).pop();
+                const latestBackup = getBackups(routine).pop();
 
-        if (existsSync(backupFolder) && latestBackup) {
-          const checkChanges = await hasChanges(
-            backupFolder,
-            latestBackup,
-            routine
-          );
+                if (existsSync(backupFolder) && latestBackup) {
+                    const checkChanges = await hasChanges(
+                        backupFolder,
+                        latestBackup,
+                        routine
+                    );
 
-          if (!checkChanges) {
-            return;
-          }
-        }
+                    if (!checkChanges) {
+                        return;
+                    }
+                }
 
-        const hasDependencies =
-          routine?.dependencies && routine?.dependencies?.length > 0;
+                const hasDependencies =
+                    routine?.dependencies && routine?.dependencies?.length > 0;
 
-        if (hasDependencies) {
-          const processes = (await getProcesses()) as Array<TProcess>;
-          const dependencies = routine.dependencies as Array<string>;
+                if (hasDependencies) {
+                    const processes = (await getProcesses()) as Array<TProcess>;
+                    const dependencies = routine.dependencies as Array<string>;
 
-          const isRunning = dependencies.every((dependency) => {
-            return processes.some((process) => process.name === dependency);
-          });
+                    const isRunning = dependencies.every((dependency) => {
+                        return processes.some(
+                            (process) => process.name === dependency
+                        );
+                    });
 
-          if (!isRunning) {
-            return;
-          }
-        }
+                    if (!isRunning) {
+                        return;
+                    }
+                }
 
-        const date = new Date();
+                const date = new Date();
 
-        const requiresBackup =
-          process.env.DEV_MODE === 'true' ||
-          !latestBackup ||
-          date.getTime() - Number(latestBackup.split('-')[0]) >
-            routine.frequency * 60 * 1000;
+                const requiresBackup =
+                    process.env.DEV_MODE === 'true' ||
+                    !latestBackup ||
+                    date.getTime() - Number(latestBackup.split('-')[0]) >
+                        routine.frequency * 60 * 1000;
 
-        if (!requiresBackup) {
-          return;
-        }
+                if (!requiresBackup) {
+                    return;
+                }
 
-        const backupFiles = `${backupFolder}/${date.getTime()}-${date
-          .toISOString()
-          .replace(/T/, ' ')
-          .replace(/\..+/, '')
-          .replace(/:/g, '-')}/`;
+                const backupFiles = `${backupFolder}/${date.getTime()}-${date
+                    .toISOString()
+                    .replace(/T/, ' ')
+                    .replace(/\..+/, '')
+                    .replace(/:/g, '-')}/`;
 
-        if (!existsSync(backupFolder)) {
-          mkdirSync(backupFolder);
-        }
+                if (!existsSync(backupFolder)) {
+                    mkdirSync(backupFolder);
+                }
 
-        if (!existsSync(backupFiles)) {
-          mkdirSync(backupFiles);
-        }
+                if (!existsSync(backupFiles)) {
+                    mkdirSync(backupFiles);
+                }
 
-        if (routine.type === 'folder') {
-          cpSync(routine.path, backupFiles, { recursive: true });
-        } else {
-          const filename = routine.path.split('/').pop();
-          copyFileSync(routine.path, backupFiles + filename);
-        }
+                if (routine.type === 'folder') {
+                    cpSync(routine.path, backupFiles, { recursive: true });
+                } else {
+                    const filename = routine.path.split('/').pop();
+                    copyFileSync(routine.path, backupFiles + filename);
+                }
 
-        checkLimit(routine);
-      } catch (error) {
-        console.error(error);
-      }
-    });
+                checkLimit(routine);
+            } catch (error) {
+                console.error(error);
+            }
+        });
 }
